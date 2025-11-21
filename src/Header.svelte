@@ -153,13 +153,14 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(11, 11, 11, 0.98);
+    background: #000000;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 0;
     z-index: 45;
+    padding-top: 120px;
   }
 
   .mobile-nav a {
