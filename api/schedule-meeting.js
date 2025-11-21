@@ -15,7 +15,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Initialize Resend (API key from environment)
+    // Check if API key is set
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY environment variable is not set')
+      return res.status(500).json({
+        success: false,
+        message: 'Email service is not configured. Please try again later.'
+      })
+    }
 
     // Format the date and time for display
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
