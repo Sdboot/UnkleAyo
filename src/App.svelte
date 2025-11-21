@@ -3,6 +3,7 @@
   import Footer from './Footer.svelte'
   import Subscribe from './Subscribe.svelte'
   import Archive from './Archive.svelte'
+  import ScheduleMeeting from './ScheduleMeeting.svelte'
   import ContentSections from './ContentSections.svelte'
 
   let currentPage = 'home'
@@ -20,6 +21,8 @@
       currentPage = 'subscribe'
     } else if (hash === 'archive') {
       currentPage = 'archive'
+    } else if (hash === 'schedule') {
+      currentPage = 'schedule'
     } else {
       currentPage = 'home'
     }
@@ -53,6 +56,8 @@
     <Subscribe />
   {:else if currentPage === 'archive'}
     <Archive />
+  {:else if currentPage === 'schedule'}
+    <ScheduleMeeting />
   {/if}
 </main>
 
