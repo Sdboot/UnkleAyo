@@ -98,6 +98,13 @@
     a.download = `${title}.pdf`
     a.click()
   }
+
+  function downloadAudio(audio, title) {
+    const a = document.createElement('a')
+    a.href = audio
+    a.download = `${title}.mp3`
+    a.click()
+  }
 </script>
 
 <div class="content-sections">
@@ -127,6 +134,11 @@
                   <source src={podcast.audio} type="audio/mpeg" />
                   Your browser does not support the audio element.
                 </audio>
+              </div>
+              <div class="content-actions">
+                <button class="action-btn download-btn" on:click={() => downloadAudio(podcast.audio, podcast.title)}>
+                  ⬇ Download Podcast
+                </button>
               </div>
             </div>
           {/if}
