@@ -40,7 +40,7 @@
     <div class="content-container">
       <section class="hero">
         <nav class="additional-links">
-          <a href="#archive">YouTube</a>
+          <a href="https://www.youtube.com/@unkleayo">YouTube</a>
           <a href="https://www.linkedin.com/in/unkleayo/" target="_blank">LinkedIn</a>
           <a href="#subscribe">E-mail</a>
         </nav>

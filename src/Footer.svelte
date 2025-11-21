@@ -23,7 +23,7 @@
       <ul>
         <li><a href="#apple">Apple Podcasts</a></li>
         <li><a href="#spotify">Spotify</a></li>
-        <li><a href="#youtube">YouTube</a></li>
+        <li><a href="#https://www.youtube.com/@unkleayo">YouTube</a></li>
       </ul>
     </div>
 

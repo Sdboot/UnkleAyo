@@ -149,7 +149,7 @@
 
   .mobile-nav {
     position: fixed;
-    top: 104px;
+    top: 64px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -160,7 +160,7 @@
     align-items: center;
     gap: 0;
     z-index: 99;
-    padding-top: 0;
+    padding-top: 200px;
   }
 
   .mobile-nav a {
