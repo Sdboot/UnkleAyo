@@ -37,6 +37,7 @@
       <a href="https://www.instagram.com/unkleayo/" target="_blank" on:click={closeMenu}>Instagram</a>
       <a href="#archive" on:click={closeMenu}>Archive</a>
       <a href="#subscribe" on:click={closeMenu}>Subscribe</a>
+      <a href="#schedule" on:click={closeMenu}>Schedule Meeting</a>
     </nav>
   {/if}
 </header>
