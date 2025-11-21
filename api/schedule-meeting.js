@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     // Email to you (admin)
     const adminEmailResult = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+      from: 'onboarding@resend.dev',
       to: 'salakodeborah234@gmail.com',
       subject: `New Meeting Request from ${name}`,
       html: `
@@ -55,24 +55,25 @@ export default async function handler(req, res) {
       `
     })
 
-    // Confirmation email to user
+    // Confirmation email to you (since we can only send to verified email on free tier)
     const userEmailResult = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
-      to: email,
-      subject: 'Meeting Request Received - UnkleAyo',
+      from: 'onboarding@resend.dev',
+      to: 'salakodeborah234@gmail.com',
+      subject: `Confirmation: Meeting Request from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #ff6b35;">Meeting Request Received</h2>
-          <p>Hi ${name},</p>
-          <p>Thank you for requesting a meeting! We have received your meeting request with the following details:</p>
+          <h2 style="color: #ff6b35;">Meeting Request Summary</h2>
+          <p>You have received a new meeting request:</p>
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Requestor Name:</strong> ${name}</p>
+            <p><strong>Requestor Email:</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Requestor Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             <p><strong>Requested Date:</strong> ${formattedDate}</p>
             <p><strong>Requested Time:</strong> ${time}</p>
-            <p><strong>Your Phone:</strong> ${phone}</p>
           </div>
-          <p>We will review your request and contact you shortly to confirm the meeting.</p>
-          <p>Best regards,<br><strong>UnkleAyo</strong></p>
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">This is an automated message. Please do not reply to this email.</p>
+          <p><strong>Next Step:</strong> Contact the requestor at ${email} or ${phone} to confirm the meeting.</p>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">This is an automated message from UnkleAyo website.</p>
         </div>
       `
     })
