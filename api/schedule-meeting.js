@@ -1,9 +1,11 @@
+import sgMail from '@sendgrid/mail'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
-  const { name, email, phone, date, time, message } = req.body
+  const { name, email, phone, date, time } = req.body
 
   // Validate required fields
   if (!name || !email || !phone || !date || !time) {
@@ -11,43 +13,73 @@ export default async function handler(req, res) {
   }
 
   try {
-    // TODO: Configure your email service here
-    // This is where you'd integrate with services like:
-    // - SendGrid
-    // - Mailgun
-    // - AWS SES
-    // - Nodemailer
-    // - etc.
+    // Initialize SendGrid
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
-    // For now, we'll just log the meeting request
-    console.log('Meeting request:', { name, email, phone, date, time })
+    // Format the date and time for display
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
 
-    // Example: Send email using SendGrid (you need to set SENDGRID_API_KEY env variable)
-    // import sgMail from '@sendgrid/mail'
-    // sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    // await sgMail.send({
-    //   to: 'your-email@example.com',
-    //   from: 'noreply@unkleayo.com',
-    //   subject: `New Meeting Request from ${name}`,
-    //   html: `
-    //     <h2>New Meeting Request</h2>
-    //     <p><strong>Name:</strong> ${name}</p>
-    //     <p><strong>Email:</strong> ${email}</p>
-    //     <p><strong>Phone:</strong> ${phone}</p>
-    //     <p><strong>Requested Date:</strong> ${date}</p>
-    //     <p><strong>Requested Time:</strong> ${time}</p>
-    //   `
-    // })
+    // Email to you (admin)
+    const adminEmail = {
+      to: process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com',
+      from: process.env.FROM_EMAIL || 'noreply@unkleayo.com',
+      subject: `New Meeting Request from ${name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #ff6b35;">New Meeting Request</h2>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p><strong>Requested Date:</strong> ${formattedDate}</p>
+            <p><strong>Requested Time:</strong> ${time}</p>
+          </div>
+          <p style="color: #666; font-size: 12px;">This is an automated message from UnkleAyo website.</p>
+        </div>
+      `
+    }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Meeting request received. We will contact you soon.' 
+    // Confirmation email to user
+    const userEmail = {
+      to: email,
+      from: process.env.FROM_EMAIL || 'noreply@unkleayo.com',
+      subject: 'Meeting Request Received - UnkleAyo',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #ff6b35;">Meeting Request Received</h2>
+          <p>Hi ${name},</p>
+          <p>Thank you for requesting a meeting! We have received your meeting request with the following details:</p>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Requested Date:</strong> ${formattedDate}</p>
+            <p><strong>Requested Time:</strong> ${time}</p>
+            <p><strong>Your Phone:</strong> ${phone}</p>
+          </div>
+          <p>We will review your request and contact you shortly to confirm the meeting.</p>
+          <p>Best regards,<br><strong>UnkleAyo</strong></p>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">This is an automated message. Please do not reply to this email.</p>
+        </div>
+      `
+    }
+
+    // Send both emails
+    await sgMail.send(adminEmail)
+    await sgMail.send(userEmail)
+
+    return res.status(200).json({
+      success: true,
+      message: 'Meeting request received. We will contact you soon.'
     })
   } catch (error) {
     console.error('Error processing meeting request:', error)
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Error processing your request' 
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing your request'
     })
   }
 }
