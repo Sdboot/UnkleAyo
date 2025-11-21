@@ -92,13 +92,6 @@
     expandedNewsletter = expandedNewsletter === id ? null : id
   }
 
-  function downloadAudio(audio, title) {
-    const a = document.createElement('a')
-    a.href = audio
-    a.download = `${title}.mp3`
-    a.click()
-  }
-
   function downloadPDF(pdf, title) {
     const a = document.createElement('a')
     a.href = pdf
@@ -129,14 +122,6 @@
           {#if expandedPodcast === podcast.id}
             <div class="dropdown-content">
               <p class="content-description">{podcast.description}</p>
-              <div class="content-actions">
-                <button class="action-btn listen-btn" on:click={() => { /* play audio */ }}>
-                  ▶ Listen
-                </button>
-                <button class="action-btn download-btn" on:click={() => downloadAudio(podcast.audio, podcast.title)}>
-                  ⬇ Download
-                </button>
-              </div>
               <div class="audio-player-container">
                 <audio controls>
                   <source src={podcast.audio} type="audio/mpeg" />
