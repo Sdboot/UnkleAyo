@@ -281,8 +281,8 @@
   }
 
   .action-btn {
-    padding: 8px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 20px 0px 2px 0px;
+    padding: 6px;
     border-radius: 4px;
     background: transparent;
     color: rgba(255, 255, 255, 0.9);
