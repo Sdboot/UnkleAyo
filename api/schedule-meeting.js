@@ -1,4 +1,6 @@
-import sgMail from '@sendgrid/mail'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,8 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Initialize SendGrid
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    // Initialize Resend (API key from environment)
 
     // Format the date and time for display
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -25,9 +26,9 @@ export default async function handler(req, res) {
     })
 
     // Email to you (admin)
-    const adminEmail = {
-      to: process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com',
-      from: process.env.FROM_EMAIL || 'noreply@unkleayo.com',
+    const adminEmailResult = await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+      to: 'salakodeborah234@gmail.com',
       subject: `New Meeting Request from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -43,12 +44,12 @@ export default async function handler(req, res) {
           <p style="color: #666; font-size: 12px;">This is an automated message from UnkleAyo website.</p>
         </div>
       `
-    }
+    })
 
     // Confirmation email to user
-    const userEmail = {
+    const userEmailResult = await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
       to: email,
-      from: process.env.FROM_EMAIL || 'noreply@unkleayo.com',
       subject: 'Meeting Request Received - UnkleAyo',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -65,11 +66,15 @@ export default async function handler(req, res) {
           <p style="color: #666; font-size: 12px; margin-top: 30px;">This is an automated message. Please do not reply to this email.</p>
         </div>
       `
-    }
+    })
 
-    // Send both emails
-    await sgMail.send(adminEmail)
-    await sgMail.send(userEmail)
+    if (adminEmailResult.error || userEmailResult.error) {
+      console.error('Email sending error:', adminEmailResult.error || userEmailResult.error)
+      return res.status(500).json({
+        success: false,
+        message: 'Error sending emails'
+      })
+    }
 
     return res.status(200).json({
       success: true,
@@ -79,7 +84,7 @@ export default async function handler(req, res) {
     console.error('Error processing meeting request:', error)
     return res.status(500).json({
       success: false,
-      message: 'Error processing your request'
+      message: 'Error processing your request. Please try again later.'
     })
   }
 }
