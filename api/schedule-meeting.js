@@ -14,6 +14,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Missing required fields' })
   }
 
+  console.log('Meeting request received:', { name, email, phone, date, time })
+
   try {
     // Check if API key is set
     if (!process.env.RESEND_API_KEY) {
@@ -76,10 +78,19 @@ export default async function handler(req, res) {
     })
 
     if (adminEmailResult.error || userEmailResult.error) {
-      console.error('Email sending error:', adminEmailResult.error || userEmailResult.error)
+      const adminError = adminEmailResult.error
+      const userError = userEmailResult.error
+      
+      console.error('Admin email error:', adminError)
+      console.error('User email error:', userError)
+      
       return res.status(500).json({
         success: false,
-        message: 'Error sending emails'
+        message: 'Error sending emails. Please try again in a moment.',
+        error: {
+          admin: adminError?.message || null,
+          user: userError?.message || null
+        }
       })
     }
 
