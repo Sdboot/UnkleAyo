@@ -20,10 +20,14 @@
       <a href="#archive">Archive</a>
       <a href="#subscribe">Subscribe</a>
     </nav>
-    <button class="hamburger" on:click={toggleMenu} aria-label="Toggle menu">
-      <span class="line"></span>
-      <span class="line"></span>
-      <span class="line"></span>
+    <button class="hamburger" class:open={menuOpen} on:click={toggleMenu} aria-label="Toggle menu">
+      {#if menuOpen}
+        <span class="cancel">✕</span>
+      {:else}
+        <span class="line"></span>
+        <span class="line"></span>
+        <span class="line"></span>
+      {/if}
     </button>
   </div>
 
@@ -131,29 +135,43 @@
     transition: all 0.3s ease;
   }
 
+  .hamburger .cancel {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1;
+    display: block;
+    transition: color 0.3s ease;
+  }
+
+  .hamburger:hover .cancel {
+    color: #efefef;
+  }
+
   .mobile-nav {
-    position: absolute;
-    top: 100%;
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    background: rgba(11, 11, 11, 0.95);
+    bottom: 0;
+    background: rgba(11, 11, 11, 0.98);
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     gap: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 45;
   }
 
   .mobile-nav a {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
-    font-size: 16px;
-    padding: 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.2s;
+    font-size: 24px;
+    padding: 20px 0;
+    transition: color 0.2s;
+    text-align: center;
   }
 
   .mobile-nav a:hover {
-    background: rgba(255, 255, 255, 0.05);
     color: #efefef;
   }
 
