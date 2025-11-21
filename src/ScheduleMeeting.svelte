@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from 'svelte'
+
   let name = ''
   let email = ''
   let phone = ''
@@ -9,6 +11,10 @@
   let errorMessage = ''
 
   const todayDate = new Date().toISOString().split('T')[0]
+
+  onMount(() => {
+    window.scrollTo(0, 0)
+  })
 
   function handleSubmit() {
     // Validation
