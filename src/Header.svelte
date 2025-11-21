@@ -1,6 +1,6 @@
 <script>
   export let brand = 'UnkleAyo'
-  let menuOpen = false
+  export let menuOpen = false
 
   function toggleMenu() {
     menuOpen = !menuOpen
@@ -65,7 +65,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 50;
+    z-index: 100;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     background: rgba(11, 11, 11, 0.8);
@@ -149,7 +149,7 @@
 
   .mobile-nav {
     position: fixed;
-    top: 0;
+    top: 104px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -159,8 +159,8 @@
     justify-content: center;
     align-items: center;
     gap: 0;
-    z-index: 45;
-    padding-top: 120px;
+    z-index: 99;
+    padding-top: 0;
   }
 
   .mobile-nav a {
@@ -190,6 +190,10 @@
     }
 
     .hamburger {
+      display: flex;
+    }
+
+    .hamburger.open ~ .mobile-nav {
       display: flex;
     }
   }

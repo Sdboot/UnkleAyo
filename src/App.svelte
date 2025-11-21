@@ -6,6 +6,7 @@
   import ContentSections from './ContentSections.svelte'
 
   let currentPage = 'home'
+  let menuOpen = false
 
   function navigateTo(page) {
     currentPage = page
@@ -32,9 +33,9 @@
 </script>
 
 
-<Header brand="UnkleAyo" />
+<Header brand="UnkleAyo" bind:menuOpen />
 
-<main class="app-main">
+<main class="app-main" class:hidden={menuOpen}>
   {#if currentPage === 'home'}
     <div class="content-container">
       <section class="hero">
@@ -54,4 +55,10 @@
     <Archive />
   {/if}
 </main>
+
+<style>
+  .app-main.hidden {
+    display: none;
+  }
+</style>
 
