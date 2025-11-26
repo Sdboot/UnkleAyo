@@ -24,17 +24,23 @@
     const publicUrl = import.meta.env.VITE_PUBLIC_URL
     if (publicUrl && publicUrl.trim() !== '') {
       apiUrl = publicUrl
-      console.log('✅ Using public URL:', apiUrl)
+      console.log('✅ Using public URL from VITE_PUBLIC_URL:', apiUrl)
     } else {
-      const protocol = window.location.protocol
-      const hostname = window.location.hostname
-      // Use port 3001 for local development
-      const port = 3001
-      apiUrl = `${protocol}//${hostname}:${port}`
-      console.log('⚠️ No VITE_PUBLIC_URL set, using localhost fallback:', apiUrl)
+      // For local development only
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const protocol = window.location.protocol
+        const port = 3001
+        apiUrl = `${protocol}//${window.location.hostname}:${port}`
+        console.log('✅ Local development mode, using:', apiUrl)
+      } else {
+        // For production (same domain as frontend)
+        apiUrl = window.location.origin
+        console.log('⚠️ Production mode detected. Set VITE_PUBLIC_URL if backend is on different server')
+        console.log('Using frontend origin as API URL:', apiUrl)
+      }
     }
     
-    console.log('API URL set to:', apiUrl)
+    console.log('Final API URL set to:', apiUrl)
     
     // Test API connectivity
     try {
@@ -47,6 +53,7 @@
     } catch (err) {
       console.error('⚠️ API test failed:', err.message)
       console.error('Make sure the backend server is running on:', apiUrl)
+      console.error('Or set VITE_PUBLIC_URL environment variable to your backend URL')
     }
   })
 
