@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { createPaymentIntent, confirmPayment, handleStripeWebhook } from './api/payment.js'
 
 dotenv.config()
 
@@ -32,6 +33,11 @@ app.get('/api/test', (req, res) => {
     timestamp: new Date().toISOString()
   })
 })
+
+// Payment endpoints
+app.post('/api/create-payment-intent', createPaymentIntent)
+app.post('/api/confirm-payment', confirmPayment)
+app.post('/api/webhook/stripe', handleStripeWebhook)
 
 // Schedule meeting endpoint
 app.post('/api/schedule-meeting', async (req, res) => {
