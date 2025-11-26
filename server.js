@@ -8,7 +8,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Enable CORS for all origins (needed for ngrok and cross-device access)
+// Enable CORS for all origins
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -154,8 +154,4 @@ app.post('/api/schedule-meeting', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)
   console.log(`Access from other devices using your computer's IP address on port ${PORT}`)
-  console.log(`\n📌 To enable remote access from ANY device (not on same WiFi):`)
-  console.log(`1. Install ngrok: https://ngrok.com/download`)
-  console.log(`2. Run in another terminal: ngrok http 3001`)
-  console.log(`3. Copy the forwarding URL and set it in VITE_PUBLIC_URL environment variable`)
 })

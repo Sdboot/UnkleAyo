@@ -7,7 +7,6 @@
 ✅ Email confirmations (admin + user)
 ✅ Copy-to-clipboard for account details
 ✅ Works on ALL devices (desktop, tablet, mobile)
-✅ **NEW: Remote access from anywhere in the world with ngrok**
 
 ## How to Access from ANY Device
 
@@ -37,20 +36,6 @@ The frontend will automatically detect your device and connect to the backend on
 
 ✅ Device must be on the SAME WIFI network as your computer
 ✅ Firewall must allow ports 5173 (frontend) and 3001 (backend)
-
-## 🌍 Remote Access (NEW - Worldwide Access)
-
-Want users to access from **ANY device, ANY location**? Use ngrok!
-
-See **`REMOTE_ACCESS_SETUP.md`** for complete instructions.
-
-Quick start:
-1. Download ngrok from https://ngrok.com/download
-2. Open PowerShell and run: `ngrok http 3001`
-3. Copy the HTTPS URL from ngrok
-4. Edit `.env` and set: `VITE_PUBLIC_URL=https://your-ngrok-url`
-5. Run `npm run dev`
-6. Share the URL with users!
 
 ## Server Status
 

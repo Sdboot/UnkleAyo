@@ -1,6 +1,5 @@
 <script>
   import { onMount } from 'svelte'
-  import { loadStripe } from '@stripe/stripe-js'
   import { currencies, currencyPrices, bankDetails } from './currencyConfig'
 
   let step = 1
@@ -10,15 +9,10 @@
   let selectedDate = ''
   let selectedTime = ''
   let selectedCurrency = 'USD'
-  let paymentMethod = 'transfer'
   let isLoading = false
   let successMessage = ''
   let errorMessage = ''
   let apiUrl = ''
-  let stripe = null
-  let elements = null
-  let cardElement = null
-  let clientSecret = ''
   let copiedText = ''
 
   const todayDate = new Date().toISOString().split('T')[0]
@@ -30,28 +24,29 @@
     const publicUrl = import.meta.env.VITE_PUBLIC_URL
     if (publicUrl && publicUrl.trim() !== '') {
       apiUrl = publicUrl
-      console.log('✅ Using ngrok URL:', apiUrl)
+      console.log('✅ Using public URL:', apiUrl)
     } else {
       const protocol = window.location.protocol
       const hostname = window.location.hostname
+      // Use port 3001 for local development
       const port = 3001
-      apiUrl = hostname === 'localhost' || hostname === '127.0.0.1' 
-        ? `${protocol}//${hostname}:${port}`
-        : `${protocol}//${hostname}:${port}`
+      apiUrl = `${protocol}//${hostname}:${port}`
+      console.log('⚠️ No VITE_PUBLIC_URL set, using localhost fallback:', apiUrl)
     }
     
     console.log('API URL set to:', apiUrl)
     
     // Test API connectivity
     try {
-      const testResponse = await fetch(`${apiUrl}/api/test`, {
-        headers: { 'ngrok-skip-browser-warning': 'true' }
-      })
+      const testResponse = await fetch(`${apiUrl}/api/test`)
       if (testResponse.ok) {
         console.log('✅ API is reachable')
+      } else {
+        console.warn('⚠️ API test returned status:', testResponse.status)
       }
     } catch (err) {
       console.error('⚠️ API test failed:', err.message)
+      console.error('Make sure the backend server is running on:', apiUrl)
     }
   })
 
@@ -131,8 +126,7 @@
       const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           paymentIntentId: `bank_transfer_${Date.now()}`,
@@ -191,13 +185,18 @@
         throw new Error('API URL not initialized. Please refresh the page.')
       }
 
+      console.log('Form submission starting...')
+      console.log('API URL:', apiUrl)
+      console.log('Request data:', { name, email, phone, selectedDate, selectedTime, selectedCurrency, amount })
+
       // Bank transfer payment flow
-      console.log('Processing bank transfer...')
-      const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
+      const confirmUrl = `${apiUrl}/api/confirm-payment`
+      console.log('Sending POST request to:', confirmUrl)
+
+      const confirmResponse = await fetch(confirmUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           paymentIntentId: `bank_transfer_${Date.now()}`,
@@ -210,12 +209,16 @@
         })
       })
 
+      console.log('Response received, status:', confirmResponse.status)
+
       if (!confirmResponse.ok) {
         const errorText = await confirmResponse.text()
-        throw new Error(`Request failed: ${errorText}`)
+        console.error('Server error response:', errorText)
+        throw new Error(`Request failed with status ${confirmResponse.status}: ${errorText}`)
       }
 
       const confirmData = await confirmResponse.json()
+      console.log('Response data:', confirmData)
 
       if (confirmData.success) {
         successMessage = 'Meeting scheduled! Bank transfer details have been sent to your email. Please complete the transfer to confirm your meeting.'
@@ -228,6 +231,8 @@
       }
     } catch (error) {
       console.error('Error in handleSubmit:', error)
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
       errorMessage = error.message || 'Scheduling failed. Please try again.'
     } finally {
       isLoading = false
