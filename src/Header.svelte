@@ -19,6 +19,7 @@
       <a href="https://www.instagram.com/unkleayo/" target="_blank">Instagram</a>
       <a href="#archive">Archive</a>
       <a href="#subscribe">Subscribe</a>
+      <a href="#schedule" class="schedule-link">Schedule Meeting</a>
     </nav>
     <button class="hamburger" class:open={menuOpen} on:click={toggleMenu} aria-label="Toggle menu">
       {#if menuOpen}
@@ -116,6 +117,21 @@
 
   .nav a:hover {
     color: #efefef;
+  }
+
+  .nav a.schedule-link {
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .nav a.schedule-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+    color: #000;
   }
 
   .hamburger {
