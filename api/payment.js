@@ -58,7 +58,7 @@ export async function confirmPayment(req, res) {
     if (paymentMethod === 'bank_transfer') {
       // For bank transfers, we don't need to verify with Stripe
       // Just log and send confirmation emails
-      return handleBankTransferConfirmation(res, { paymentIntentId, name, email, phone, date, time, currency, amount })
+      return await handleBankTransferConfirmation(res, { paymentIntentId, name, email, phone, date, time, currency, amount })
     }
 
     // Original card payment flow
