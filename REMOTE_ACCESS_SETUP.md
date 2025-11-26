@@ -117,6 +117,7 @@ The frontend will automatically use the ngrok URL for backend API calls.
 - Verify ngrok terminal shows "online"
 - Check `.env` VITE_PUBLIC_URL is set correctly
 - Restart both ngrok and `npm run dev`
+- **ngrok Free Tier**: The app now automatically adds headers to bypass the ngrok interstitial warning page
 
 **ngrok URL not working after restart**
 - ngrok free plan generates new URL each session
@@ -125,8 +126,9 @@ The frontend will automatically use the ngrok URL for backend API calls.
 
 **Still getting WiFi error message**
 - Clear browser cache (Ctrl+Shift+Delete)
-- Check browser console for actual error
+- Check browser console (F12) for actual error
 - Verify backend is running
+- Make sure you're accessing from the correct URL (frontend on port 5173, backend uses ngrok tunnel automatically)
 
 ---
 

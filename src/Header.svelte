@@ -192,6 +192,23 @@
     color: #efefef;
   }
 
+  .mobile-nav a[href="#schedule"] {
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    color: #000;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 20px;
+    margin-top: 30px;
+    transition: all 0.3s;
+  }
+
+  .mobile-nav a[href="#schedule"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+    color: #000;
+  }
+
   @media (max-width: 640px) {
     .header-inner {
       padding: 16px 20px;
