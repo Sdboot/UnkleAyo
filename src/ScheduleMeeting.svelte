@@ -157,7 +157,7 @@
       console.log('API response:', confirmData)
 
       if (confirmData.success) {
-        successMessage = '✅ Your meeting is being scheduled! Check your email for confirmation details.'
+        successMessage = '✅ Meeting scheduled successfully! Check your email for confirmation details.'
         setTimeout(() => {
           name = email = phone = selectedDate = selectedTime = ''
           selectedCurrency = 'USD'
