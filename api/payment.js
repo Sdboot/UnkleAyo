@@ -7,6 +7,11 @@ dotenv.config()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Check if required API keys are configured
+if (!process.env.RESEND_API_KEY) {
+  console.warn('⚠️ WARNING: RESEND_API_KEY is not configured. Emails will not be sent.')
+}
+
 // Create a payment intent for the meeting
 export async function createPaymentIntent(req, res) {
   try {
@@ -48,7 +53,7 @@ export async function createPaymentIntent(req, res) {
 // Confirm payment and create Cal.com event
 export async function confirmPayment(req, res) {
   try {
-    const { paymentIntentId, paymentMethod, name, email, phone, date, time, currency, amount } = req.body
+    const { paymentIntentId, paymentMethod, name, email, phone, date, time, currency, amount, adminEmail } = req.body
 
     if (!paymentIntentId || !name || !email || !date || !time) {
       return res.status(400).json({ success: false, message: 'Missing required fields' })
@@ -58,7 +63,7 @@ export async function confirmPayment(req, res) {
     if (paymentMethod === 'bank_transfer') {
       // For bank transfers, we don't need to verify with Stripe
       // Just log and send confirmation emails
-      return await handleBankTransferConfirmation(res, { paymentIntentId, name, email, phone, date, time, currency, amount })
+      return await handleBankTransferConfirmation(res, { paymentIntentId, name, email, phone, date, time, currency, amount, adminEmail })
     }
 
     // Original card payment flow
@@ -157,6 +162,9 @@ async function handleBankTransferConfirmation(res, data) {
   try {
     const { paymentIntentId, name, email, phone, date, time, currency, amount, adminEmail } = data
 
+    console.log('📧 Starting bank transfer confirmation...')
+    console.log('Data received:', { paymentIntentId, name, email, phone, date, time, currency, amount, adminEmail })
+
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -221,6 +229,8 @@ async function handleBankTransferConfirmation(res, data) {
         `
       })
 
+      console.log('✅ User email sent to:', email)
+
       // Send notification email to admin
       await resend.emails.send({
         from: 'onboarding@resend.dev',
@@ -251,20 +261,23 @@ async function handleBankTransferConfirmation(res, data) {
         `
       })
 
-      console.log('✅ Bank transfer emails sent successfully')
+      console.log('✅ Admin email sent to:', adminEmail || process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com')
+      console.log('✅ Both emails sent successfully')
     } catch (emailError) {
       console.error('⚠️ Email sending failed:', emailError.message)
+      console.error('Email error details:', emailError)
       // Continue even if email fails - the meeting should still be scheduled
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Bank transfer details sent to your email. Please complete the transfer to confirm your meeting.',
+      message: 'Meeting scheduled! Confirmation emails sent.',
       paymentIntentId,
       paymentMethod: 'bank_transfer'
     })
   } catch (error) {
-    console.error('Error handling bank transfer:', error)
+    console.error('❌ Error handling bank transfer:', error.message)
+    console.error('Full error:', error)
     return res.status(500).json({
       success: false,
       message: 'Error processing bank transfer request: ' + error.message
