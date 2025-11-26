@@ -174,80 +174,88 @@ async function handleBankTransferConfirmation(res, data) {
       })
     }
 
-    // Send bank transfer details email to user
-    await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: email,
-      subject: `💳 Complete Your Bank Transfer - Meeting Reference ${paymentIntentId.slice(-8).toUpperCase()}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #ff6b35;">💳 Complete Your Bank Transfer</h2>
-          <p>Hi ${name},</p>
-          <p>Thank you for scheduling a meeting with UnkleAyo! To confirm your booking, please complete the bank transfer using the details below.</p>
-          
-          <div style="background: #fff3f0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b35;">
-            <h3 style="color: #ff6b35; margin-top: 0;">Bank Transfer Details</h3>
-            <p><strong>Bank Name:</strong> ${bankDetails.bankName}</p>
-            <p><strong>Account Name:</strong> ${bankDetails.accountName}</p>
-            <p><strong>Account Number:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.accountNumber}</span></p>
-            ${bankDetails.iban ? `<p><strong>IBAN:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.iban}</span></p>` : ''}
-            ${bankDetails.swiftCode ? `<p><strong>SWIFT Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.swiftCode}</span></p>` : ''}
-            ${bankDetails.sortCode ? `<p><strong>Sort Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.sortCode}</span></p>` : ''}
-            ${bankDetails.routingNumber ? `<p><strong>Routing Number:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.routingNumber}</span></p>` : ''}
-            ${bankDetails.ifscCode ? `<p><strong>IFSC Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.ifscCode}</span></p>` : ''}
-            ${bankDetails.bsb ? `<p><strong>BSB:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.bsb}</span></p>` : ''}
-            ${bankDetails.branchCode ? `<p><strong>Branch Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.branchCode}</span></p>` : ''}
-            ${bankDetails.bankCode ? `<p><strong>Bank Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.bankCode}</span></p>` : ''}
+    // Send emails with proper error handling
+    try {
+      // Send bank transfer details email to user
+      await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: `💳 Complete Your Bank Transfer - Meeting Reference ${paymentIntentId.slice(-8).toUpperCase()}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #ff6b35;">💳 Complete Your Bank Transfer</h2>
+            <p>Hi ${name},</p>
+            <p>Thank you for scheduling a meeting with UnkleAyo! To confirm your booking, please complete the bank transfer using the details below.</p>
+            
+            <div style="background: #fff3f0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b35;">
+              <h3 style="color: #ff6b35; margin-top: 0;">Bank Transfer Details</h3>
+              <p><strong>Bank Name:</strong> ${bankDetails.bankName}</p>
+              <p><strong>Account Name:</strong> ${bankDetails.accountName}</p>
+              <p><strong>Account Number:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.accountNumber}</span></p>
+              ${bankDetails.iban ? `<p><strong>IBAN:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.iban}</span></p>` : ''}
+              ${bankDetails.swiftCode ? `<p><strong>SWIFT Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.swiftCode}</span></p>` : ''}
+              ${bankDetails.sortCode ? `<p><strong>Sort Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.sortCode}</span></p>` : ''}
+              ${bankDetails.routingNumber ? `<p><strong>Routing Number:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.routingNumber}</span></p>` : ''}
+              ${bankDetails.ifscCode ? `<p><strong>IFSC Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.ifscCode}</span></p>` : ''}
+              ${bankDetails.bsb ? `<p><strong>BSB:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.bsb}</span></p>` : ''}
+              ${bankDetails.branchCode ? `<p><strong>Branch Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.branchCode}</span></p>` : ''}
+              ${bankDetails.bankCode ? `<p><strong>Bank Code:</strong> <span style="font-family: monospace; background: #f0f0f0; padding: 2px 6px;">${bankDetails.bankCode}</span></p>` : ''}
+            </div>
+
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Transfer Details</h3>
+              <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
+              <p><strong>📝 Reference/Description:</strong> ${name} - ${paymentIntentId.slice(-8).toUpperCase()}</p>
+              <p><strong>📅 Meeting Date:</strong> ${formattedDate}</p>
+              <p><strong>⏰ Meeting Time:</strong> ${time}</p>
+            </div>
+
+            <div style="background: #fffbf0; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+              <p style="margin: 0; color: #856404;"><strong>⚠️ Important:</strong> Please use your name as the reference/description for the transfer so we can identify your payment.</p>
+            </div>
+
+            <p>Once we receive your payment, your meeting will be confirmed and you'll receive a meeting link via email.</p>
+            <p>If you have any questions, please don't hesitate to reach out.</p>
+            <p>Best regards,<br>UnkleAyo Team</p>
           </div>
+        `
+      })
 
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Transfer Details</h3>
-            <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
-            <p><strong>📝 Reference/Description:</strong> ${name} - ${paymentIntentId.slice(-8).toUpperCase()}</p>
-            <p><strong>📅 Meeting Date:</strong> ${formattedDate}</p>
-            <p><strong>⏰ Meeting Time:</strong> ${time}</p>
+      // Send notification email to admin
+      await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: process.env.ADMIN_EMAIL,
+        subject: `📅 Bank Transfer Pending - ${name} (${currency})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #ff6b35;">📅 Bank Transfer Pending</h2>
+            
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Customer Information</h3>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Phone:</strong> ${phone}</p>
+            </div>
+
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Meeting Details</h3>
+              <p><strong>📅 Date:</strong> ${formattedDate}</p>
+              <p><strong>⏰ Time:</strong> ${time}</p>
+              <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
+              <p><strong>⏳ Payment Status:</strong> Pending Bank Transfer</p>
+              <p><strong>📝 Reference:</strong> ${paymentIntentId}</p>
+            </div>
+
+            <p style="color: #666; font-size: 12px;">Awaiting payment confirmation. This is an automated message from UnkleAyo website.</p>
           </div>
+        `
+      })
 
-          <div style="background: #fffbf0; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
-            <p style="margin: 0; color: #856404;"><strong>⚠️ Important:</strong> Please use your name as the reference/description for the transfer so we can identify your payment.</p>
-          </div>
-
-          <p>Once we receive your payment, your meeting will be confirmed and you'll receive a meeting link via email.</p>
-          <p>If you have any questions, please don't hesitate to reach out.</p>
-          <p>Best regards,<br>UnkleAyo Team</p>
-        </div>
-      `
-    })
-
-    // Send notification email to admin
-    await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: process.env.ADMIN_EMAIL,
-      subject: `📅 Bank Transfer Pending - ${name} (${currency})`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #ff6b35;">📅 Bank Transfer Pending</h2>
-          
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Phone:</strong> ${phone}</p>
-          </div>
-
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Meeting Details</h3>
-            <p><strong>📅 Date:</strong> ${formattedDate}</p>
-            <p><strong>⏰ Time:</strong> ${time}</p>
-            <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
-            <p><strong>⏳ Payment Status:</strong> Pending Bank Transfer</p>
-            <p><strong>📝 Reference:</strong> ${paymentIntentId}</p>
-          </div>
-
-          <p style="color: #666; font-size: 12px;">Awaiting payment confirmation. This is an automated message from UnkleAyo website.</p>
-        </div>
-      `
-    })
+      console.log('✅ Bank transfer emails sent successfully')
+    } catch (emailError) {
+      console.error('⚠️ Email sending failed:', emailError.message)
+      // Continue even if email fails - the meeting should still be scheduled
+    }
 
     return res.status(200).json({
       success: true,
@@ -259,7 +267,7 @@ async function handleBankTransferConfirmation(res, data) {
     console.error('Error handling bank transfer:', error)
     return res.status(500).json({
       success: false,
-      message: 'Error processing bank transfer request'
+      message: 'Error processing bank transfer request: ' + error.message
     })
   }
 }

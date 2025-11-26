@@ -140,6 +140,8 @@
         throw new Error('API URL not initialized. Please refresh the page.')
       }
 
+      console.log('Sending request to:', `${apiUrl}/api/confirm-payment`)
+
       const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
         method: 'POST',
         headers: {
@@ -157,6 +159,8 @@
         })
       })
 
+      console.log('Response status:', confirmResponse.status)
+
       if (!confirmResponse.ok) {
         const errorText = await confirmResponse.text()
         console.error('API error response:', errorText)
@@ -164,6 +168,7 @@
       }
 
       const confirmData = await confirmResponse.json()
+      console.log('API response:', confirmData)
 
       if (confirmData.success) {
         successMessage = '✅ Your meeting is being scheduled! Check your email for confirmation details.'
@@ -179,6 +184,7 @@
       }
     } catch (error) {
       console.error('Error confirming bank payment:', error)
+      console.error('Error stack:', error.stack)
       errorMessage = `Error: ${error.message}`
     } finally {
       isLoading = false
