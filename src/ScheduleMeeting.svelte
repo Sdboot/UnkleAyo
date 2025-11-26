@@ -49,7 +49,11 @@
     try {
       const testResponse = await fetch(`${apiUrl}/api/test`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'ngrok-skip-interactive': 'true'
+        },
         mode: 'cors'
       })
       if (testResponse.ok) {
@@ -138,7 +142,9 @@
     fetch(`${apiUrl}/api/schedule-meeting`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'ngrok-skip-interactive': 'true'
       },
       body: JSON.stringify(meetingData),
       mode: 'cors',
