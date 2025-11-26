@@ -19,6 +19,7 @@
   let elements = null
   let cardElement = null
   let clientSecret = ''
+  let copiedText = ''
 
   const todayDate = new Date().toISOString().split('T')[0]
 
@@ -95,6 +96,69 @@
     step = 1
     errorMessage = ''
     window.scrollTo(0, 0)
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      copiedText = text
+      setTimeout(() => {
+        copiedText = ''
+      }, 2000)
+    }).catch(err => {
+      console.error('Failed to copy:', err)
+    })
+  }
+
+  async function confirmBankPayment() {
+    if (!name || !email || !phone || !selectedDate || !selectedTime) {
+      errorMessage = 'Please complete all meeting details'
+      return
+    }
+
+    errorMessage = ''
+    successMessage = ''
+    isLoading = true
+
+    try {
+      const amount = currencyPrices[selectedCurrency]
+
+      const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({
+          paymentIntentId: `bank_transfer_${Date.now()}`,
+          paymentMethod: 'bank_transfer',
+          name, email, phone,
+          date: selectedDate,
+          time: selectedTime,
+          currency: selectedCurrency,
+          amount
+        })
+      })
+
+      const confirmData = await confirmResponse.json()
+
+      if (confirmData.success) {
+        successMessage = '✅ Your meeting is being scheduled! Check your email for confirmation details.'
+        setTimeout(() => {
+          name = email = phone = selectedDate = selectedTime = ''
+          selectedCurrency = 'USD'
+          paymentMethod = 'card'
+          step = 1
+          successMessage = ''
+        }, 3000)
+      } else {
+        errorMessage = confirmData.message || 'Failed to schedule meeting'
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      errorMessage = error.message || 'Failed to schedule meeting'
+    } finally {
+      isLoading = false
+    }
   }
 
   async function handleSubmit(e) {
@@ -373,54 +437,99 @@
                 </div>
                 <div class="bank-detail-row">
                   <span class="detail-label">Account Number:</span>
-                  <span class="detail-value copy-value" title="Click to copy">{accountDetails.accountNumber}</span>
+                  <div class="copy-container">
+                    <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.accountNumber)} title="Click to copy">{accountDetails.accountNumber}</span>
+                    <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.accountNumber)} title="Copy account number">
+                      {copiedText === accountDetails.accountNumber ? '✓ Copied!' : '📋 Copy'}
+                    </button>
+                  </div>
                 </div>
                 {#if accountDetails.iban}
                   <div class="bank-detail-row">
                     <span class="detail-label">IBAN:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.iban}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.iban)} title="Click to copy">{accountDetails.iban}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.iban)} title="Copy IBAN">
+                        {copiedText === accountDetails.iban ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.sortCode}
                   <div class="bank-detail-row">
                     <span class="detail-label">Sort Code:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.sortCode}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.sortCode)} title="Click to copy">{accountDetails.sortCode}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.sortCode)} title="Copy sort code">
+                        {copiedText === accountDetails.sortCode ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.routingNumber}
                   <div class="bank-detail-row">
                     <span class="detail-label">Routing Number:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.routingNumber}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.routingNumber)} title="Click to copy">{accountDetails.routingNumber}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.routingNumber)} title="Copy routing number">
+                        {copiedText === accountDetails.routingNumber ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.swiftCode}
                   <div class="bank-detail-row">
                     <span class="detail-label">SWIFT Code:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.swiftCode}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.swiftCode)} title="Click to copy">{accountDetails.swiftCode}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.swiftCode)} title="Copy SWIFT code">
+                        {copiedText === accountDetails.swiftCode ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.bsb}
                   <div class="bank-detail-row">
                     <span class="detail-label">BSB:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.bsb}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.bsb)} title="Click to copy">{accountDetails.bsb}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.bsb)} title="Copy BSB">
+                        {copiedText === accountDetails.bsb ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.ifscCode}
                   <div class="bank-detail-row">
                     <span class="detail-label">IFSC Code:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.ifscCode}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.ifscCode)} title="Click to copy">{accountDetails.ifscCode}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.ifscCode)} title="Copy IFSC code">
+                        {copiedText === accountDetails.ifscCode ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.branchCode}
                   <div class="bank-detail-row">
                     <span class="detail-label">Branch Code:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.branchCode}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.branchCode)} title="Click to copy">{accountDetails.branchCode}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.branchCode)} title="Copy branch code">
+                        {copiedText === accountDetails.branchCode ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
                 {#if accountDetails.bankCode}
                   <div class="bank-detail-row">
                     <span class="detail-label">Bank Code:</span>
-                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.bankCode}</span>
+                    <div class="copy-container">
+                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.bankCode)} title="Click to copy">{accountDetails.bankCode}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.bankCode)} title="Copy bank code">
+                        {copiedText === accountDetails.bankCode ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
                   </div>
                 {/if}
               </div>
@@ -440,9 +549,15 @@
 
           <div class="button-group">
             <button type="button" class="submit-btn back-btn" on:click={backToSchedule} disabled={isLoading}>Back</button>
-            <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
-              {isLoading ? 'Processing...' : `${paymentMethod === 'card' ? 'Pay' : 'Proceed with Transfer'} ${currentCurrency?.symbol}${amount}`}
-            </button>
+            {#if paymentMethod === 'card'}
+              <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
+                {isLoading ? 'Processing...' : `Pay ${currentCurrency?.symbol}${amount}`}
+              </button>
+            {:else}
+              <button type="button" class="submit-btn confirm-btn payment-made-btn" on:click={confirmBankPayment} disabled={isLoading}>
+                {isLoading ? 'Scheduling...' : '✓ I have made the payment'}
+              </button>
+            {/if}
           </div>
         </form>
       {/if}
@@ -817,16 +932,45 @@
     font-weight: 500;
   }
 
+  .copy-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .copy-value {
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.2s;
+    flex: 1;
   }
 
   .copy-value:hover {
     background: rgba(255, 107, 53, 0.2);
     color: #ff6b35;
+  }
+
+  .copy-btn {
+    padding: 4px 10px;
+    background: rgba(255, 107, 53, 0.2);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 4px;
+    color: #ff6b35;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255, 107, 53, 0.3);
+    border-color: #ff6b35;
+  }
+
+  .copy-btn:active {
+    transform: scale(0.95);
   }
 
   .bank-notice {
@@ -902,6 +1046,15 @@
     margin-top: 0;
   }
 
+  .payment-made-btn {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    color: #fff;
+  }
+
+  .payment-made-btn:hover:not(:disabled) {
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+  }
+
   @media (max-width: 640px) {
     .schedule-container {
       padding: 16px;
@@ -927,7 +1080,22 @@
     .bank-detail-row {
       flex-direction: column;
       align-items: flex-start;
-      gap: 4px;
+      gap: 8px;
+    }
+
+    .copy-container {
+      width: 100%;
+      gap: 6px;
+    }
+
+    .copy-value {
+      flex: 1;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      font-size: 11px;
+      padding: 3px 8px;
     }
 
     .button-group {
