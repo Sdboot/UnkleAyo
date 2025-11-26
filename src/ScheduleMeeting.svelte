@@ -23,10 +23,10 @@
     // Check if there's a public URL set via environment variable
     const publicUrl = import.meta.env.VITE_PUBLIC_URL
     
-    if (publicUrl) {
+    if (publicUrl && publicUrl.trim() !== '') {
       // Use the public URL (e.g., from ngrok or production deployment)
       apiUrl = publicUrl
-      console.log('Using public URL:', apiUrl)
+      console.log('✅ Using public URL from VITE_PUBLIC_URL:', apiUrl)
     } else {
       // Auto-detect based on current device
       const protocol = window.location.protocol
@@ -36,18 +36,21 @@
       if (hostname === 'localhost' || hostname === '127.0.0.1') {
         apiUrl = `${protocol}//localhost:${port}`
       } else {
-        apiUrl = `${protocol}//${hostname}:${port}`
+        // For other devices on same WiFi, use HTTP
+        apiUrl = `http://${hostname}:${port}`
       }
+      console.log('⚠️ Using auto-detected URL:', apiUrl)
     }
     
     console.log('Current hostname:', window.location.hostname)
-    console.log('API URL:', apiUrl)
+    console.log('API URL set to:', apiUrl)
     
     // Test connection to backend
     try {
       const testResponse = await fetch(`${apiUrl}/api/test`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors'
       })
       if (testResponse.ok) {
         console.log('✅ Backend connection successful')
@@ -137,7 +140,9 @@
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(meetingData)
+      body: JSON.stringify(meetingData),
+      mode: 'cors',
+      credentials: 'omit'
     })
       .then(response => {
         if (!response.ok) {

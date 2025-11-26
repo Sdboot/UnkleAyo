@@ -8,5 +8,8 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     middlewareMode: false
+  },
+  define: {
+    'import.meta.env.VITE_PUBLIC_URL': JSON.stringify(process.env.VITE_PUBLIC_URL || '')
   }
 })
