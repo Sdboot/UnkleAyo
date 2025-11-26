@@ -33,10 +33,9 @@
         apiUrl = `${protocol}//${window.location.hostname}:${port}`
         console.log('✅ Local development mode, using:', apiUrl)
       } else {
-        // For production (same domain as frontend)
+        // For production (Vercel) - use same origin for API calls
         apiUrl = window.location.origin
-        console.log('⚠️ Production mode detected. Set VITE_PUBLIC_URL if backend is on different server')
-        console.log('Using frontend origin as API URL:', apiUrl)
+        console.log('✅ Production mode (Vercel), using same origin:', apiUrl)
       }
     }
     

@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "RESEND_API_KEY": "@resend_api_key",
+    "STRIPE_SECRET_KEY": "@stripe_secret_key",
+    "ADMIN_EMAIL": "@admin_email"
+  },
+  "functions": {
+    "vercel/api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
