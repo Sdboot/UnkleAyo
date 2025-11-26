@@ -10,7 +10,7 @@
   let selectedDate = ''
   let selectedTime = ''
   let selectedCurrency = 'USD'
-  let paymentMethod = 'card'
+  let paymentMethod = 'transfer'
   let isLoading = false
   let successMessage = ''
   let errorMessage = ''
@@ -25,12 +25,6 @@
 
   onMount(async () => {
     window.scrollTo(0, 0)
-    
-    // Initialize Stripe
-    const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-    if (stripePublishableKey) {
-      stripe = await loadStripe(stripePublishableKey)
-    }
     
     // Set API URL
     const publicUrl = import.meta.env.VITE_PUBLIC_URL
@@ -93,14 +87,6 @@
     if (validateStep1()) {
       step = 2
       window.scrollTo(0, 0)
-      // Mount card element after DOM is ready - only for card payments
-      setTimeout(() => {
-        if (paymentMethod === 'card' && stripe && !cardElement) {
-          elements = stripe.elements()
-          cardElement = elements.create('card')
-          cardElement.mount('#card-element')
-        }
-      }, 100)
     }
   }
 
@@ -175,7 +161,7 @@
         setTimeout(() => {
           name = email = phone = selectedDate = selectedTime = ''
           selectedCurrency = 'USD'
-          paymentMethod = 'card'
+          paymentMethod = 'transfer'
           step = 1
           successMessage = ''
         }, 3000)
@@ -194,11 +180,6 @@
   async function handleSubmit(e) {
     e.preventDefault()
 
-    if (paymentMethod === 'card' && (!stripe || !cardElement)) {
-      errorMessage = 'Payment system not initialized'
-      return
-    }
-
     errorMessage = ''
     successMessage = ''
     isLoading = true
@@ -210,129 +191,44 @@
         throw new Error('API URL not initialized. Please refresh the page.')
       }
 
-      if (paymentMethod === 'card') {
-        // Card payment flow
-        // Create payment intent
-        console.log('Creating payment intent...')
-        const paymentResponse = await fetch(`${apiUrl}/api/create-payment-intent`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            date: selectedDate,
-            time: selectedTime,
-            currency: selectedCurrency,
-            amount
-          })
+      // Bank transfer payment flow
+      console.log('Processing bank transfer...')
+      const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({
+          paymentIntentId: `bank_transfer_${Date.now()}`,
+          paymentMethod: 'bank_transfer',
+          name, email, phone,
+          date: selectedDate,
+          time: selectedTime,
+          currency: selectedCurrency,
+          amount
         })
+      })
 
-        if (!paymentResponse.ok) {
-          const errorText = await paymentResponse.text()
-          console.error('Payment intent error:', errorText)
-          throw new Error(`Failed to create payment (${paymentResponse.status}): ${errorText}`)
-        }
+      if (!confirmResponse.ok) {
+        const errorText = await confirmResponse.text()
+        throw new Error(`Request failed: ${errorText}`)
+      }
 
-        const paymentData = await paymentResponse.json()
+      const confirmData = await confirmResponse.json()
 
-        if (!paymentData.success) {
-          throw new Error(paymentData.message || 'Failed to create payment')
-        }
-
-        clientSecret = paymentData.clientSecret
-
-        // Confirm payment with card
-        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: cardElement,
-            billing_details: { name, email, phone }
-          }
-        })
-
-        if (error) {
-          errorMessage = error.message
-          throw error
-        }
-
-        if (paymentIntent.status === 'succeeded') {
-          console.log('Payment succeeded, confirming on backend...')
-          const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'ngrok-skip-browser-warning': 'true'
-            },
-            body: JSON.stringify({
-              paymentIntentId: paymentIntent.id,
-              name, email, phone,
-              date: selectedDate,
-              time: selectedTime
-            })
-          })
-
-          if (!confirmResponse.ok) {
-            const errorText = await confirmResponse.text()
-            throw new Error(`Confirmation failed: ${errorText}`)
-          }
-
-          const confirmData = await confirmResponse.json()
-
-          if (confirmData.success) {
-            successMessage = 'Meeting scheduled successfully! Check your email.'
-            name = email = phone = selectedDate = selectedTime = ''
-            selectedCurrency = 'USD'
-            paymentMethod = 'card'
-            step = 1
-            setTimeout(() => { successMessage = '' }, 5000)
-          } else {
-            errorMessage = confirmData.message || 'Failed to confirm meeting'
-          }
-        }
+      if (confirmData.success) {
+        successMessage = 'Meeting scheduled! Bank transfer details have been sent to your email. Please complete the transfer to confirm your meeting.'
+        name = email = phone = selectedDate = selectedTime = ''
+        selectedCurrency = 'USD'
+        step = 1
+        setTimeout(() => { successMessage = '' }, 7000)
       } else {
-        // Bank transfer payment flow
-        console.log('Processing bank transfer...')
-        const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          },
-          body: JSON.stringify({
-            paymentIntentId: `bank_transfer_${Date.now()}`,
-            paymentMethod: 'bank_transfer',
-            name, email, phone,
-            date: selectedDate,
-            time: selectedTime,
-            currency: selectedCurrency,
-            amount
-          })
-        })
-
-        if (!confirmResponse.ok) {
-          const errorText = await confirmResponse.text()
-          throw new Error(`Request failed: ${errorText}`)
-        }
-
-        const confirmData = await confirmResponse.json()
-
-        if (confirmData.success) {
-          successMessage = 'Meeting scheduled! Bank transfer details have been sent to your email. Please complete the transfer to confirm your meeting.'
-          name = email = phone = selectedDate = selectedTime = ''
-          selectedCurrency = 'USD'
-          paymentMethod = 'card'
-          step = 1
-          setTimeout(() => { successMessage = '' }, 7000)
-        } else {
-          errorMessage = confirmData.message || 'Failed to schedule meeting'
-        }
+        errorMessage = confirmData.message || 'Failed to schedule meeting'
       }
     } catch (error) {
       console.error('Error in handleSubmit:', error)
-      errorMessage = error.message || 'Payment failed. Please try again.'
+      errorMessage = error.message || 'Scheduling failed. Please try again.'
     } finally {
       isLoading = false
     }
@@ -449,36 +345,8 @@
             </div>
           </div>
 
-          <div class="payment-method-section">
-            <h3 class="section-subtitle">Payment Method</h3>
-            <div class="payment-method-grid">
-              <label class="payment-method-option">
-                <input type="radio" bind:group={paymentMethod} value="card" />
-                <div class="payment-method-card" class:selected={paymentMethod === 'card'}>
-                  <div class="method-icon">💳</div>
-                  <span class="method-name">Card Payment</span>
-                  <span class="method-desc">Debit or Credit Card</span>
-                </div>
-              </label>
-              <label class="payment-method-option">
-                <input type="radio" bind:group={paymentMethod} value="transfer" />
-                <div class="payment-method-card" class:selected={paymentMethod === 'transfer'}>
-                  <div class="method-icon">🏦</div>
-                  <span class="method-name">Bank Transfer</span>
-                  <span class="method-desc">Direct Transfer</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {#if paymentMethod === 'card'}
-            <div class="card-section">
-              <h3 class="section-subtitle">Card Details</h3>
-              <div id="card-element" class="card-input"></div>
-            </div>
-          {:else}
-            <div class="bank-details-section">
-              <h3 class="section-subtitle">Bank Transfer Details</h3>
+          <div class="bank-details-section">
+            <h3 class="section-subtitle">Bank Transfer Details</h3>
               <div class="bank-details-card">
                 <div class="bank-detail-row">
                   <span class="detail-label">Bank Name:</span>
@@ -590,7 +458,6 @@
                 <p>Please complete your bank transfer and include your name as reference. Your meeting will be confirmed once payment is received.</p>
               </div>
             </div>
-          {/if}
 
           {#if successMessage}
             <div class="success-message">{successMessage}</div>
@@ -602,15 +469,9 @@
 
           <div class="button-group">
             <button type="button" class="submit-btn back-btn" on:click={backToSchedule} disabled={isLoading}>Back</button>
-            {#if paymentMethod === 'card'}
-              <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
-                {isLoading ? 'Processing...' : `Pay ${currentCurrency?.symbol}${amount}`}
-              </button>
-            {:else}
-              <button type="button" class="submit-btn confirm-btn payment-made-btn" on:click={confirmBankPayment} disabled={isLoading}>
-                {isLoading ? 'Scheduling...' : '✓ I have made the payment'}
-              </button>
-            {/if}
+            <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
+              {isLoading ? 'Scheduling...' : 'Proceed with Bank Transfer'}
+            </button>
           </div>
         </form>
       {/if}
@@ -873,75 +734,6 @@
     font-weight: 600;
   }
 
-  .payment-method-section {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .payment-method-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .payment-method-option input {
-    display: none;
-  }
-
-  .payment-method-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-  }
-
-  .payment-method-card:hover {
-    border-color: rgba(255, 107, 53, 0.3);
-  }
-
-  .payment-method-card.selected {
-    background: rgba(255, 107, 53, 0.1);
-    border-color: #ff6b35;
-  }
-
-  .method-icon {
-    font-size: 28px;
-    margin-bottom: 4px;
-  }
-
-  .method-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #efefef;
-  }
-
-  .method-desc {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .card-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .card-input {
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    color: #efefef;
-  }
-
   .bank-details-section {
     display: flex;
     flex-direction: column;
@@ -1099,15 +891,6 @@
     margin-top: 0;
   }
 
-  .payment-made-btn {
-    background: linear-gradient(90deg, #22c55e, #16a34a);
-    color: #fff;
-  }
-
-  .payment-made-btn:hover:not(:disabled) {
-    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-  }
-
   @media (max-width: 640px) {
     .schedule-container {
       padding: 16px;
@@ -1124,10 +907,6 @@
 
     .currency-grid {
       grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    }
-
-    .payment-method-grid {
-      grid-template-columns: 1fr;
     }
 
     .bank-detail-row {
