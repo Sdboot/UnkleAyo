@@ -20,21 +20,27 @@
   onMount(async () => {
     window.scrollTo(0, 0)
     
-    // Determine the API URL based on the current host
-    const protocol = window.location.protocol
-    const hostname = window.location.hostname
-    const port = 3001
+    // Check if there's a public URL set via environment variable
+    const publicUrl = import.meta.env.VITE_PUBLIC_URL
     
-    // If on localhost, use localhost:3001
-    // If on IP address, use that same IP with port 3001
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      apiUrl = `${protocol}//localhost:${port}`
+    if (publicUrl) {
+      // Use the public URL (e.g., from ngrok or production deployment)
+      apiUrl = publicUrl
+      console.log('Using public URL:', apiUrl)
     } else {
-      // For mobile or other devices, use the same IP with port 3001
-      apiUrl = `${protocol}//${hostname}:${port}`
+      // Auto-detect based on current device
+      const protocol = window.location.protocol
+      const hostname = window.location.hostname
+      const port = 3001
+      
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        apiUrl = `${protocol}//localhost:${port}`
+      } else {
+        apiUrl = `${protocol}//${hostname}:${port}`
+      }
     }
     
-    console.log('Current hostname:', hostname)
+    console.log('Current hostname:', window.location.hostname)
     console.log('API URL:', apiUrl)
     
     // Test connection to backend
@@ -159,7 +165,19 @@
       .catch(error => {
         console.error('❌ Error connecting to server:', error.message)
         console.error('API URL was:', apiUrl)
-        errorMessage = `Error connecting to server: ${error.message}. Make sure you're on the same WiFi network as the computer.`
+        let errorMsg = 'Error connecting to server'
+        
+        // Provide specific guidance based on the scenario
+        if (!apiUrl.includes('ngrok') && !apiUrl.includes('localhost')) {
+          // User is not on localhost and no ngrok URL is configured
+          errorMsg += '. For local network access, ensure devices are on the same WiFi. For remote access, use ngrok (see Setup Guide).'
+        } else if (!apiUrl.includes('ngrok')) {
+          errorMsg += '. Make sure backend is running and devices are on the same WiFi network.'
+        } else {
+          errorMsg += '. Check your ngrok tunnel is still active.'
+        }
+        
+        errorMessage = errorMsg
       })
       .finally(() => {
         isLoading = false
@@ -174,18 +192,6 @@
 <div class="schedule-container">
   <section class="schedule-section">
     <h1 class="schedule-title">Schedule a Meeting with UnkleAyo</h1>
-    
-    <!-- Debug Info Panel -->
-    <div class="debug-panel">
-      <details>
-        <summary>🔧 Connection Info (Click to expand)</summary>
-        <div class="debug-content">
-          <p><strong>Frontend URL:</strong> {window.location.href}</p>
-          <p><strong>API URL:</strong> {apiUrl}/api/schedule-meeting</p>
-          <p><strong>Server Status:</strong> <span id="server-status">Testing...</span></p>
-        </div>
-      </details>
-    </div>
     
     <!-- Step Indicator -->
     <div class="step-indicator">
@@ -457,51 +463,6 @@
     margin-bottom: 40px;
     color: #efefef;
     text-align: center;
-  }
-
-  /* Debug Panel */
-  .debug-panel {
-    max-width: 600px;
-    margin: 0 auto 20px;
-    background: rgba(100, 100, 100, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 12px;
-  }
-
-  .debug-panel details {
-    cursor: pointer;
-  }
-
-  .debug-panel summary {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 600;
-    padding: 8px;
-    user-select: none;
-  }
-
-  .debug-panel summary:hover {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .debug-content {
-    padding: 12px 8px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
-    line-height: 1.6;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 8px;
-    overflow-wrap: break-word;
-    word-break: break-all;
-  }
-
-  .debug-content p {
-    margin: 4px 0;
-  }
-
-  .debug-content strong {
-    color: #ff6b35;
   }
 
   .step-indicator {
