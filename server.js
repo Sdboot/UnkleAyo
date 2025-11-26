@@ -12,7 +12,20 @@ app.use(express.json())
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' })
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    message: 'Backend server is running'
+  })
+})
+
+// CORS test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CORS is working correctly',
+    timestamp: new Date().toISOString()
+  })
 })
 
 // Schedule meeting endpoint
@@ -127,6 +140,7 @@ app.post('/api/schedule-meeting', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`Access from other devices using your computer's IP address on port ${PORT}`)
 })

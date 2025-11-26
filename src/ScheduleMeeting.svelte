@@ -13,11 +13,45 @@
   let successMessage = ''
   let errorMessage = ''
   let copiedField = null
+  let apiUrl = ''
 
   const todayDate = new Date().toISOString().split('T')[0]
 
-  onMount(() => {
+  onMount(async () => {
     window.scrollTo(0, 0)
+    
+    // Determine the API URL based on the current host
+    const protocol = window.location.protocol
+    const hostname = window.location.hostname
+    const port = 3001
+    
+    // If on localhost, use localhost:3001
+    // If on IP address, use that same IP with port 3001
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      apiUrl = `${protocol}//localhost:${port}`
+    } else {
+      // For mobile or other devices, use the same IP with port 3001
+      apiUrl = `${protocol}//${hostname}:${port}`
+    }
+    
+    console.log('Current hostname:', hostname)
+    console.log('API URL:', apiUrl)
+    
+    // Test connection to backend
+    try {
+      const testResponse = await fetch(`${apiUrl}/api/test`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      if (testResponse.ok) {
+        console.log('✅ Backend connection successful')
+      } else {
+        console.warn('⚠️ Backend responded with status:', testResponse.status)
+      }
+    } catch (err) {
+      console.error('❌ Backend connection failed:', err.message)
+      console.error('Trying to connect to:', apiUrl)
+    }
   })
 
   function copyToClipboard(text, fieldName) {
@@ -92,14 +126,19 @@
     }
 
     // Send to backend API endpoint
-    fetch('http://localhost:3001/api/schedule-meeting', {
+    fetch(`${apiUrl}/api/schedule-meeting`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(meetingData)
     })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server responded with status ${response.status}`)
+        }
+        return response.json()
+      })
       .then(data => {
         if (data.success) {
           successMessage = 'Meeting scheduled successfully! Check your email for confirmation.'
@@ -118,8 +157,9 @@
         }
       })
       .catch(error => {
-        console.error('Error:', error)
-        errorMessage = 'Error connecting to server. Please try again.'
+        console.error('❌ Error connecting to server:', error.message)
+        console.error('API URL was:', apiUrl)
+        errorMessage = `Error connecting to server: ${error.message}. Make sure you're on the same WiFi network as the computer.`
       })
       .finally(() => {
         isLoading = false
@@ -134,6 +174,18 @@
 <div class="schedule-container">
   <section class="schedule-section">
     <h1 class="schedule-title">Schedule a Meeting with UnkleAyo</h1>
+    
+    <!-- Debug Info Panel -->
+    <div class="debug-panel">
+      <details>
+        <summary>🔧 Connection Info (Click to expand)</summary>
+        <div class="debug-content">
+          <p><strong>Frontend URL:</strong> {window.location.href}</p>
+          <p><strong>API URL:</strong> {apiUrl}/api/schedule-meeting</p>
+          <p><strong>Server Status:</strong> <span id="server-status">Testing...</span></p>
+        </div>
+      </details>
+    </div>
     
     <!-- Step Indicator -->
     <div class="step-indicator">
@@ -405,6 +457,51 @@
     margin-bottom: 40px;
     color: #efefef;
     text-align: center;
+  }
+
+  /* Debug Panel */
+  .debug-panel {
+    max-width: 600px;
+    margin: 0 auto 20px;
+    background: rgba(100, 100, 100, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  .debug-panel details {
+    cursor: pointer;
+  }
+
+  .debug-panel summary {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    padding: 8px;
+    user-select: none;
+  }
+
+  .debug-panel summary:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .debug-content {
+    padding: 12px 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 8px;
+    overflow-wrap: break-word;
+    word-break: break-all;
+  }
+
+  .debug-content p {
+    margin: 4px 0;
+  }
+
+  .debug-content strong {
+    color: #ff6b35;
   }
 
   .step-indicator {
