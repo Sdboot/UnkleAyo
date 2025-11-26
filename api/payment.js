@@ -155,7 +155,7 @@ export async function confirmPayment(req, res) {
 // Handle bank transfer confirmation
 async function handleBankTransferConfirmation(res, data) {
   try {
-    const { paymentIntentId, name, email, phone, date, time, currency, amount } = data
+    const { paymentIntentId, name, email, phone, date, time, currency, amount, adminEmail } = data
 
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -224,11 +224,11 @@ async function handleBankTransferConfirmation(res, data) {
       // Send notification email to admin
       await resend.emails.send({
         from: 'onboarding@resend.dev',
-        to: process.env.ADMIN_EMAIL,
-        subject: `📅 Bank Transfer Pending - ${name} (${currency})`,
+        to: adminEmail || process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com',
+        subject: `📅 New Meeting Scheduled - ${name} (${currency})`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #ff6b35;">📅 Bank Transfer Pending</h2>
+            <h2 style="color: #ff6b35;">📅 New Meeting Scheduled</h2>
             
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3>Customer Information</h3>
@@ -242,11 +242,11 @@ async function handleBankTransferConfirmation(res, data) {
               <p><strong>📅 Date:</strong> ${formattedDate}</p>
               <p><strong>⏰ Time:</strong> ${time}</p>
               <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
-              <p><strong>⏳ Payment Status:</strong> Pending Bank Transfer</p>
+              <p><strong>✅ Payment Status:</strong> Payment Confirmed by Customer</p>
               <p><strong>📝 Reference:</strong> ${paymentIntentId}</p>
             </div>
 
-            <p style="color: #666; font-size: 12px;">Awaiting payment confirmation. This is an automated message from UnkleAyo website.</p>
+            <p style="color: #666; font-size: 12px;">The customer has confirmed they have made the payment. This is an automated message from UnkleAyo website.</p>
           </div>
         `
       })

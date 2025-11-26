@@ -205,7 +205,8 @@
           date: selectedDate,
           time: selectedTime,
           currency: selectedCurrency,
-          amount
+          amount,
+          adminEmail: 'salakodeborah234@gmail.com'
         })
       })
 
@@ -221,7 +222,7 @@
       console.log('Response data:', confirmData)
 
       if (confirmData.success) {
-        successMessage = 'Meeting scheduled! Bank transfer details have been sent to your email. Please complete the transfer to confirm your meeting.'
+        successMessage = '✅ Meeting scheduled successfully! A confirmation email has been sent to you and the admin.'
         name = email = phone = selectedDate = selectedTime = ''
         selectedCurrency = 'USD'
         step = 1
@@ -475,7 +476,7 @@
           <div class="button-group">
             <button type="button" class="submit-btn back-btn" on:click={backToSchedule} disabled={isLoading}>Back</button>
             <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
-              {isLoading ? 'Scheduling...' : 'Proceed with Bank Transfer'}
+              {isLoading ? 'Scheduling...' : '✓ I\'ve Made the Payment'}
             </button>
           </div>
         </form>
