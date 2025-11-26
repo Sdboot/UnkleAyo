@@ -42,11 +42,23 @@
       const hostname = window.location.hostname
       const port = 3001
       apiUrl = hostname === 'localhost' || hostname === '127.0.0.1' 
-        ? `${protocol}//localhost:${port}`
-        : `http://${hostname}:${port}`
+        ? `${protocol}//${hostname}:${port}`
+        : `${protocol}//${hostname}:${port}`
     }
     
-    console.log('API URL:', apiUrl)
+    console.log('API URL set to:', apiUrl)
+    
+    // Test API connectivity
+    try {
+      const testResponse = await fetch(`${apiUrl}/api/test`, {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      })
+      if (testResponse.ok) {
+        console.log('✅ API is reachable')
+      }
+    } catch (err) {
+      console.error('⚠️ API test failed:', err.message)
+    }
   })
 
   function validateStep1() {
@@ -122,6 +134,12 @@
     try {
       const amount = currencyPrices[selectedCurrency]
 
+      console.log('Confirming bank payment for:', { name, email, amount, selectedCurrency })
+      
+      if (!apiUrl) {
+        throw new Error('API URL not initialized. Please refresh the page.')
+      }
+
       const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
         method: 'POST',
         headers: {
@@ -139,6 +157,12 @@
         })
       })
 
+      if (!confirmResponse.ok) {
+        const errorText = await confirmResponse.text()
+        console.error('API error response:', errorText)
+        throw new Error(`API returned ${confirmResponse.status}: ${errorText}`)
+      }
+
       const confirmData = await confirmResponse.json()
 
       if (confirmData.success) {
@@ -154,8 +178,8 @@
         errorMessage = confirmData.message || 'Failed to schedule meeting'
       }
     } catch (error) {
-      console.error('Error:', error)
-      errorMessage = error.message || 'Failed to schedule meeting'
+      console.error('Error confirming bank payment:', error)
+      errorMessage = `Error: ${error.message}`
     } finally {
       isLoading = false
     }
@@ -176,9 +200,14 @@
     try {
       const amount = currencyPrices[selectedCurrency]
 
+      if (!apiUrl) {
+        throw new Error('API URL not initialized. Please refresh the page.')
+      }
+
       if (paymentMethod === 'card') {
         // Card payment flow
         // Create payment intent
+        console.log('Creating payment intent...')
         const paymentResponse = await fetch(`${apiUrl}/api/create-payment-intent`, {
           method: 'POST',
           headers: {
@@ -195,6 +224,12 @@
             amount
           })
         })
+
+        if (!paymentResponse.ok) {
+          const errorText = await paymentResponse.text()
+          console.error('Payment intent error:', errorText)
+          throw new Error(`Failed to create payment (${paymentResponse.status}): ${errorText}`)
+        }
 
         const paymentData = await paymentResponse.json()
 
@@ -218,6 +253,7 @@
         }
 
         if (paymentIntent.status === 'succeeded') {
+          console.log('Payment succeeded, confirming on backend...')
           const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
             method: 'POST',
             headers: {
@@ -231,6 +267,11 @@
               time: selectedTime
             })
           })
+
+          if (!confirmResponse.ok) {
+            const errorText = await confirmResponse.text()
+            throw new Error(`Confirmation failed: ${errorText}`)
+          }
 
           const confirmData = await confirmResponse.json()
 
@@ -246,7 +287,8 @@
           }
         }
       } else {
-        // Bank transfer payment flow - just log the details, no actual charge
+        // Bank transfer payment flow
+        console.log('Processing bank transfer...')
         const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
           method: 'POST',
           headers: {
@@ -264,6 +306,11 @@
           })
         })
 
+        if (!confirmResponse.ok) {
+          const errorText = await confirmResponse.text()
+          throw new Error(`Request failed: ${errorText}`)
+        }
+
         const confirmData = await confirmResponse.json()
 
         if (confirmData.success) {
@@ -278,8 +325,8 @@
         }
       }
     } catch (error) {
-      console.error('Error:', error)
-      errorMessage = error.message || 'Payment failed'
+      console.error('Error in handleSubmit:', error)
+      errorMessage = error.message || 'Payment failed. Please try again.'
     } finally {
       isLoading = false
     }
