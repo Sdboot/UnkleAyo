@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import { loadStripe } from '@stripe/stripe-js'
-  import { currencies, currencyPrices } from './currencyConfig'
+  import { currencies, currencyPrices, bankDetails } from './currencyConfig'
 
   let step = 1
   let name = ''
@@ -10,6 +10,7 @@
   let selectedDate = ''
   let selectedTime = ''
   let selectedCurrency = 'USD'
+  let paymentMethod = 'card'
   let isLoading = false
   let successMessage = ''
   let errorMessage = ''
@@ -79,9 +80,9 @@
     if (validateStep1()) {
       step = 2
       window.scrollTo(0, 0)
-      // Mount card element after DOM is ready
+      // Mount card element after DOM is ready - only for card payments
       setTimeout(() => {
-        if (stripe && !cardElement) {
+        if (paymentMethod === 'card' && stripe && !cardElement) {
           elements = stripe.elements()
           cardElement = elements.create('card')
           cardElement.mount('#card-element')
@@ -99,7 +100,7 @@
   async function handleSubmit(e) {
     e.preventDefault()
 
-    if (!stripe || !cardElement) {
+    if (paymentMethod === 'card' && (!stripe || !cardElement)) {
       errorMessage = 'Payment system not initialized'
       return
     }
@@ -111,46 +112,77 @@
     try {
       const amount = currencyPrices[selectedCurrency]
 
-      // Create payment intent
-      const paymentResponse = await fetch(`${apiUrl}/api/create-payment-intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          date: selectedDate,
-          time: selectedTime,
-          currency: selectedCurrency,
-          amount
+      if (paymentMethod === 'card') {
+        // Card payment flow
+        // Create payment intent
+        const paymentResponse = await fetch(`${apiUrl}/api/create-payment-intent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            date: selectedDate,
+            time: selectedTime,
+            currency: selectedCurrency,
+            amount
+          })
         })
-      })
 
-      const paymentData = await paymentResponse.json()
+        const paymentData = await paymentResponse.json()
 
-      if (!paymentData.success) {
-        throw new Error(paymentData.message || 'Failed to create payment')
-      }
-
-      clientSecret = paymentData.clientSecret
-
-      // Confirm payment with card
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: { name, email, phone }
+        if (!paymentData.success) {
+          throw new Error(paymentData.message || 'Failed to create payment')
         }
-      })
 
-      if (error) {
-        errorMessage = error.message
-        throw error
-      }
+        clientSecret = paymentData.clientSecret
 
-      if (paymentIntent.status === 'succeeded') {
+        // Confirm payment with card
+        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: cardElement,
+            billing_details: { name, email, phone }
+          }
+        })
+
+        if (error) {
+          errorMessage = error.message
+          throw error
+        }
+
+        if (paymentIntent.status === 'succeeded') {
+          const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+              paymentIntentId: paymentIntent.id,
+              name, email, phone,
+              date: selectedDate,
+              time: selectedTime
+            })
+          })
+
+          const confirmData = await confirmResponse.json()
+
+          if (confirmData.success) {
+            successMessage = 'Meeting scheduled successfully! Check your email.'
+            name = email = phone = selectedDate = selectedTime = ''
+            selectedCurrency = 'USD'
+            paymentMethod = 'card'
+            step = 1
+            setTimeout(() => { successMessage = '' }, 5000)
+          } else {
+            errorMessage = confirmData.message || 'Failed to confirm meeting'
+          }
+        }
+      } else {
+        // Bank transfer payment flow - just log the details, no actual charge
         const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
           method: 'POST',
           headers: {
@@ -158,23 +190,27 @@
             'ngrok-skip-browser-warning': 'true'
           },
           body: JSON.stringify({
-            paymentIntentId: paymentIntent.id,
+            paymentIntentId: `bank_transfer_${Date.now()}`,
+            paymentMethod: 'bank_transfer',
             name, email, phone,
             date: selectedDate,
-            time: selectedTime
+            time: selectedTime,
+            currency: selectedCurrency,
+            amount
           })
         })
 
         const confirmData = await confirmResponse.json()
 
         if (confirmData.success) {
-          successMessage = 'Meeting scheduled successfully! Check your email.'
+          successMessage = 'Meeting scheduled! Bank transfer details have been sent to your email. Please complete the transfer to confirm your meeting.'
           name = email = phone = selectedDate = selectedTime = ''
           selectedCurrency = 'USD'
+          paymentMethod = 'card'
           step = 1
-          setTimeout(() => { successMessage = '' }, 5000)
+          setTimeout(() => { successMessage = '' }, 7000)
         } else {
-          errorMessage = confirmData.message || 'Failed to confirm meeting'
+          errorMessage = confirmData.message || 'Failed to schedule meeting'
         }
       }
     } catch (error) {
@@ -187,6 +223,7 @@
 
   $: amount = currencyPrices[selectedCurrency]
   $: currentCurrency = currencies.find(c => c.code === selectedCurrency)
+  $: accountDetails = bankDetails[selectedCurrency]
 </script>
 
 <div class="schedule-container">
@@ -295,10 +332,103 @@
             </div>
           </div>
 
-          <div class="card-section">
-            <h3 class="section-subtitle">Card Details</h3>
-            <div id="card-element" class="card-input"></div>
+          <div class="payment-method-section">
+            <h3 class="section-subtitle">Payment Method</h3>
+            <div class="payment-method-grid">
+              <label class="payment-method-option">
+                <input type="radio" bind:group={paymentMethod} value="card" />
+                <div class="payment-method-card" class:selected={paymentMethod === 'card'}>
+                  <div class="method-icon">💳</div>
+                  <span class="method-name">Card Payment</span>
+                  <span class="method-desc">Debit or Credit Card</span>
+                </div>
+              </label>
+              <label class="payment-method-option">
+                <input type="radio" bind:group={paymentMethod} value="transfer" />
+                <div class="payment-method-card" class:selected={paymentMethod === 'transfer'}>
+                  <div class="method-icon">🏦</div>
+                  <span class="method-name">Bank Transfer</span>
+                  <span class="method-desc">Direct Transfer</span>
+                </div>
+              </label>
+            </div>
           </div>
+
+          {#if paymentMethod === 'card'}
+            <div class="card-section">
+              <h3 class="section-subtitle">Card Details</h3>
+              <div id="card-element" class="card-input"></div>
+            </div>
+          {:else}
+            <div class="bank-details-section">
+              <h3 class="section-subtitle">Bank Transfer Details</h3>
+              <div class="bank-details-card">
+                <div class="bank-detail-row">
+                  <span class="detail-label">Bank Name:</span>
+                  <span class="detail-value">{accountDetails.bankName}</span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="detail-label">Account Name:</span>
+                  <span class="detail-value">{accountDetails.accountName}</span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="detail-label">Account Number:</span>
+                  <span class="detail-value copy-value" title="Click to copy">{accountDetails.accountNumber}</span>
+                </div>
+                {#if accountDetails.iban}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">IBAN:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.iban}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.sortCode}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">Sort Code:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.sortCode}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.routingNumber}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">Routing Number:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.routingNumber}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.swiftCode}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">SWIFT Code:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.swiftCode}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.bsb}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">BSB:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.bsb}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.ifscCode}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">IFSC Code:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.ifscCode}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.branchCode}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">Branch Code:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.branchCode}</span>
+                  </div>
+                {/if}
+                {#if accountDetails.bankCode}
+                  <div class="bank-detail-row">
+                    <span class="detail-label">Bank Code:</span>
+                    <span class="detail-value copy-value" title="Click to copy">{accountDetails.bankCode}</span>
+                  </div>
+                {/if}
+              </div>
+              <div class="bank-notice">
+                <p>Please complete your bank transfer and include your name as reference. Your meeting will be confirmed once payment is received.</p>
+              </div>
+            </div>
+          {/if}
 
           {#if successMessage}
             <div class="success-message">{successMessage}</div>
@@ -311,7 +441,7 @@
           <div class="button-group">
             <button type="button" class="submit-btn back-btn" on:click={backToSchedule} disabled={isLoading}>Back</button>
             <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
-              {isLoading ? 'Processing...' : `Pay ${currentCurrency?.symbol}${amount}`}
+              {isLoading ? 'Processing...' : `${paymentMethod === 'card' ? 'Pay' : 'Proceed with Transfer'} ${currentCurrency?.symbol}${amount}`}
             </button>
           </div>
         </form>
@@ -575,6 +705,61 @@
     font-weight: 600;
   }
 
+  .payment-method-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .payment-method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .payment-method-option input {
+    display: none;
+  }
+
+  .payment-method-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .payment-method-card:hover {
+    border-color: rgba(255, 107, 53, 0.3);
+  }
+
+  .payment-method-card.selected {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: #ff6b35;
+  }
+
+  .method-icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .method-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #efefef;
+  }
+
+  .method-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
   .card-section {
     display: flex;
     flex-direction: column;
@@ -587,6 +772,75 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
     color: #efefef;
+  }
+
+  .bank-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .bank-details-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .bank-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .bank-detail-row:last-child {
+    border-bottom: none;
+  }
+
+  .detail-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .detail-value {
+    font-size: 13px;
+    color: #efefef;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+  }
+
+  .copy-value {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .copy-value:hover {
+    background: rgba(255, 107, 53, 0.2);
+    color: #ff6b35;
+  }
+
+  .bank-notice {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  .bank-notice p {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+    line-height: 1.5;
   }
 
   .success-message {
@@ -664,6 +918,16 @@
 
     .currency-grid {
       grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    }
+
+    .payment-method-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .bank-detail-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
     }
 
     .button-group {
