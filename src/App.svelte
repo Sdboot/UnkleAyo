@@ -5,6 +5,7 @@
   import Archive from './Archive.svelte'
   import ScheduleMeeting from './ScheduleMeeting.svelte'
   import ContentSections from './ContentSections.svelte'
+  import FeaturedContent from './FeaturedContent.svelte'
 
   let currentPage = 'home'
   let menuOpen = false
@@ -19,7 +20,7 @@
     const hash = window.location.hash.slice(1)
     if (hash === 'subscribe') {
       currentPage = 'subscribe'
-    } else if (hash === 'archive') {
+    } else if (hash === 'archive' || hash === 'content') {
       currentPage = 'archive'
     } else if (hash === 'schedule') {
       currentPage = 'schedule'
@@ -49,7 +50,7 @@
         </nav>
       </section>
 
-      <ContentSections />
+      <FeaturedContent {navigateTo} />
     </div>
     <Footer />
   {:else if currentPage === 'subscribe'}
