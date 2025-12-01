@@ -40,7 +40,7 @@
 
 <div class="featured-content">
   <!-- Featured Podcast Card -->
-  <section class="featured-section podcast-card">
+  <button class="featured-section podcast-card" on:click={() => goToContent('podcast')}>
     <div class="card-header">
       <h2 class="card-title">Latest Podcast</h2>
       <span class="card-badge">Featured</span>
@@ -51,26 +51,24 @@
       <p class="content-meta">{latestPodcast.date} • {latestPodcast.duration}</p>
       <p class="content-description">{latestPodcast.description}</p>
 
-      <div class="audio-player-container">
-        <audio controls>
+      <div class="audio-player-container" on:click|stopPropagation={() => {}}>
+        <audio controls on:click|stopPropagation={() => {}}>
           <source src={latestPodcast.audio} type="audio/mpeg" />
           Your browser does not support the audio element.
         </audio>
       </div>
 
-      <div class="card-actions">
-        <button class="action-btn download-btn" on:click={downloadAudio}>
+      <div class="card-actions" on:click|stopPropagation={() => {}}>
+        <button class="action-btn download-btn" on:click|stopPropagation={downloadAudio}>
           ⬇ Download
         </button>
-        <button class="action-btn view-all-btn" on:click={() => goToContent('podcast')}>
-          View All Podcasts →
-        </button>
+        <div class="view-all-text">View All Podcasts →</div>
       </div>
     </div>
-  </section>
+  </button>
 
   <!-- Featured Newsletter Card -->
-  <section class="featured-section newsletter-card">
+  <button class="featured-section newsletter-card" on:click={() => goToContent('newsletter')}>
     <div class="card-header">
       <h2 class="card-title">Latest Newsletter</h2>
       <span class="card-badge">Featured</span>
@@ -81,16 +79,14 @@
       <p class="content-meta">{latestNewsletter.date}</p>
       <p class="content-description">{latestNewsletter.description}</p>
 
-      <div class="card-actions">
-        <button class="action-btn download-btn" on:click={downloadPDF}>
+      <div class="card-actions" on:click|stopPropagation={() => {}}>
+        <button class="action-btn download-btn" on:click|stopPropagation={downloadPDF}>
           ⬇ Download PDF
         </button>
-        <button class="action-btn view-all-btn" on:click={() => goToContent('newsletter')}>
-          View All Newsletters →
-        </button>
+        <div class="view-all-text">View All Newsletters →</div>
       </div>
     </div>
-  </section>
+  </button>
 </div>
 
 <style>
@@ -109,12 +105,19 @@
     border-radius: 12px;
     padding: 24px;
     transition: all 0.3s ease;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
   }
 
   .featured-section:hover {
     border-color: rgba(255, 107, 53, 0.4);
     background: linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, rgba(247, 147, 30, 0.1) 100%);
     transform: translateY(-4px);
+  }
+
+  .featured-section:active {
+    transform: translateY(-2px);
   }
 
   .card-header {
@@ -186,8 +189,23 @@
     margin-top: 16px;
   }
 
+  .view-all-text {
+    flex: 1.2;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 107, 53, 0.1);
+    color: #ff6b35;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
   .action-btn {
-    flex: 1;
+    flex: 0.8;
     padding: 10px 16px;
     border: 1px solid rgba(255, 107, 53, 0.3);
     border-radius: 6px;
@@ -208,10 +226,6 @@
 
   .download-btn {
     flex: 0.8;
-  }
-
-  .view-all-btn {
-    flex: 1.2;
   }
 
   @media (max-width: 768px) {
