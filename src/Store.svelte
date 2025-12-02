@@ -103,12 +103,12 @@
     }
   }
 
-  function getCartTotal() {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0)
-  }
+  let cartTotal = 0
+  let itemCount = 0
 
-  function getItemCount() {
-    return cart.reduce((count, item) => count + item.quantity, 0)
+  $: {
+    cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0)
+    itemCount = cart.reduce((count, item) => count + item.quantity, 0)
   }
 
   async function handleCheckout(e) {
@@ -133,7 +133,7 @@
         throw new Error('Paystack is not loaded. Please refresh the page.')
       }
 
-      const totalAmount = getCartTotal()
+      const totalAmount = cartTotal
       const items = cart.map(item => `${item.quantity}x ${item.name}`).join(', ')
 
       const paystackHandler = window.PaystackPop.setup({
@@ -264,11 +264,11 @@
         <div class="cart-summary">
           <div class="summary-row">
             <span>Items:</span>
-            <strong>{getItemCount()}</strong>
+            <strong>{itemCount}</strong>
           </div>
           <div class="summary-row total">
             <span>Total:</span>
-            <strong>₦{getCartTotal().toLocaleString()}</strong>
+            <strong>₦{cartTotal.toLocaleString()}</strong>
           </div>
         </div>
 
@@ -316,7 +316,7 @@
           {/if}
 
           <button type="submit" class="checkout-btn" disabled={isLoading}>
-            {isLoading ? 'Processing...' : `Pay ₦${getCartTotal().toLocaleString()}`}
+            {isLoading ? 'Processing...' : `Pay ₦${cartTotal.toLocaleString()}`}
           </button>
         </form>
       {/if}
@@ -326,7 +326,7 @@
   <button class="cart-toggle" on:click={() => showCart = !showCart}>
     <span class="cart-icon-wrapper">
       🛒
-      {#if getItemCount() > 0}
+      {#if itemCount > 0}
         <span class="notification-dot"></span>
       {/if}
     </span>
