@@ -324,7 +324,12 @@
   </div>
 
   <button class="cart-toggle" on:click={() => showCart = !showCart}>
-    🛒 Cart ({getItemCount()})
+    <span class="cart-icon-wrapper">
+      🛒
+      {#if getItemCount() > 0}
+        <span class="notification-dot"></span>
+      {/if}
+    </span>
   </button>
 </div>
 
@@ -733,7 +738,7 @@
     position: fixed;
     bottom: 24px;
     right: 24px;
-    padding: 12px 20px;
+    padding: 12px 16px;
     background: linear-gradient(90deg, #ff6b35, #f7931e);
     border: none;
     border-radius: 8px;
@@ -742,6 +747,33 @@
     cursor: pointer;
     z-index: 100;
     box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  }
+
+  .cart-icon-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .notification-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    background: #ff0000;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.2);
+    }
   }
 
   @media (max-width: 1024px) {
@@ -793,7 +825,7 @@
     }
 
     .store-wrapper.cart-visible .store-container {
-      filter: blur(7px);
+      filter: blur(50px);
       pointer-events: none;
     }
 
@@ -824,7 +856,7 @@
       top: 16px;
       bottom: auto;
       right: 16px;
-      padding: 10px 16px;
+      padding: 10px 12px;
       font-size: 13px;
     }
   }
