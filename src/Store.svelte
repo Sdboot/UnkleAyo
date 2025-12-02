@@ -739,14 +739,14 @@
     bottom: 24px;
     right: 24px;
     padding: 12px 16px;
-    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    background: #ffffff;
     border: none;
     border-radius: 8px;
     color: #000;
     font-weight: 600;
     cursor: pointer;
     z-index: 100;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   
