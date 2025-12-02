@@ -135,7 +135,7 @@
       }
 
       try {
-        const customerResponse = await fetch('https://formspree.io/f/myzwkepe', {
+        const customerResponse = await fetch('https://formspree.io/f/mblnyale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -164,7 +164,7 @@
       }
 
       try {
-        const adminResponse = await fetch('https://formspree.io/f/myzwkepe', {
+        const adminResponse = await fetch('https://formspree.io/f/mblnyale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
