@@ -821,13 +821,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.9);
       z-index: 190;
     }
 
     .store-wrapper.cart-visible .store-container {
-      filter: blur(100%);
-      pointer-events: none;
+      display: none;
     }
 
     .store-header h1 {
