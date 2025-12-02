@@ -793,7 +793,7 @@
     }
 
     .store-wrapper.cart-visible .store-container {
-      filter: blur(3px);
+      filter: blur(7px);
       pointer-events: none;
     }
 
