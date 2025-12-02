@@ -122,7 +122,7 @@
   .nav a.schedule-link {
     background: linear-gradient(90deg, #ff6b35, #f7931e);
     color: #000;
-    padding: 10px 20px;
+    padding: 10px;
     border-radius: 6px;
     font-weight: 600;
     transition: all 0.3s;
