@@ -1,7 +1,3 @@
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // Helper function to get bank details for currency
 function getBankDetailsForCurrency(currency) {
   const bankDetails = {
@@ -103,7 +99,7 @@ export default async function handler(req, res) {
       })
     }
 
-    console.log('✅ Validation passed, processing bank transfer...')
+    console.log('✅ Validation passed, processing payment confirmation...')
 
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -122,74 +118,61 @@ export default async function handler(req, res) {
       })
     }
 
-    console.log('📧 Sending emails...')
-    console.log('User email to:', email)
-    console.log('Admin email to:', adminEmail || process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com')
-
-    // Send confirmation email to user
-    const userEmailResult = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: email,
-      subject: `✅ Meeting Confirmed - ${formattedDate} at ${time}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #ff6b35;">✅ Your Meeting is Confirmed!</h2>
-          <p>Hi ${name},</p>
-          <p>Thank you for scheduling a meeting with UnkleAyo. Your meeting has been successfully confirmed!</p>
-          
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Meeting Details</h3>
-            <p><strong>📅 Date:</strong> ${formattedDate}</p>
-            <p><strong>⏰ Time:</strong> ${time}</p>
-            <p><strong>📧 Email:</strong> ${email}</p>
-            <p><strong>📱 Phone:</strong> ${phone}</p>
-            <p><strong>📝 Reference:</strong> ${paymentIntentId.slice(-8).toUpperCase()}</p>
-          </div>
-
-          <p>You will receive a meeting link via email before the scheduled time.</p>
-          <p>If you have any questions, please don't hesitate to reach out.</p>
-          <p>Best regards,<br>UnkleAyo Team</p>
-        </div>
-      `
-    })
-
-    console.log('✅ User email sent:', userEmailResult)
-
     const adminEmail_ = adminEmail || process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com'
-    const adminEmailResult = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: adminEmail_,
+
+    console.log('📧 Sending emails via Formspree...')
+    console.log('User email to:', email)
+    console.log('Admin email to:', adminEmail_)
+
+    // Send confirmation email to user via Formspree
+    const userEmailData = {
+      email: email,
+      message: `Meeting Confirmation\n\nDear ${name},\n\nYour meeting has been scheduled successfully!\n\nDetails:\nDate: ${formattedDate}\nTime: ${time}\nReference: ${paymentIntentId.slice(-8).toUpperCase()}\n\nThank you for booking with UnkleAyo.`,
+      subject: `✅ Meeting Confirmed - ${formattedDate} at ${time}`,
+      _subject: `✅ Meeting Confirmed - ${formattedDate} at ${time}`,
+      _template: 'table'
+    }
+
+    try {
+      const userResponse = await fetch('https://formspree.io/f/myzwkepe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userEmailData)
+      })
+      
+      console.log('✅ User confirmation email submitted to Formspree:', userResponse.status)
+    } catch (userEmailErr) {
+      console.error('⚠️ Error sending user email:', userEmailErr.message)
+    }
+
+    // Send admin notification via Formspree
+    const adminEmailData = {
+      email: adminEmail_,
+      message: `New Meeting Booking\n\nCustomer: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate: ${formattedDate}\nTime: ${time}\nAmount: ${amount} ${currency}\nReference: ${paymentIntentId}\n\nThis is an automated notification from UnkleAyo.`,
       subject: `📅 New Meeting Scheduled - ${name}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #ff6b35;">📅 New Meeting Confirmed</h2>
-          
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Phone:</strong> ${phone}</p>
-          </div>
+      _subject: `📅 New Meeting Scheduled - ${name}`,
+      _template: 'table'
+    }
 
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Meeting Details</h3>
-            <p><strong>📅 Date:</strong> ${formattedDate}</p>
-            <p><strong>⏰ Time:</strong> ${time}</p>
-            <p><strong>💰 Amount:</strong> ${amount} ${currency}</p>
-            <p><strong>✅ Status:</strong> Meeting Confirmed</p>
-            <p><strong>📝 Reference:</strong> ${paymentIntentId}</p>
-          </div>
-
-          <p style="color: #666; font-size: 12px;">The customer has booked a meeting. This is an automated message from UnkleAyo website.</p>
-        </div>
-      `
-    })
-
-    console.log('✅ Admin email sent:', adminEmailResult)
+    try {
+      const adminResponse = await fetch('https://formspree.io/f/myzwkepe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(adminEmailData)
+      })
+      
+      console.log('✅ Admin notification email submitted to Formspree:', adminResponse.status)
+    } catch (adminEmailErr) {
+      console.error('⚠️ Error sending admin email:', adminEmailErr.message)
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Meeting scheduled successfully! Confirmation emails sent to you and the admin.',
+      message: 'Meeting scheduled successfully! Confirmation emails have been sent.',
       paymentIntentId,
       paymentMethod: 'bank_transfer'
     })
