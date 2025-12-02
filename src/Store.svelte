@@ -249,7 +249,7 @@
             <div class="cart-item">
               <div class="item-info">
                 <h4>{item.name}</h4>
-                <span class="item-price">₦{item.price.toLocaleString()}</span>
+                <span class="item-price">₦{(item.price * item.quantity).toLocaleString()}</span>
               </div>
               <div class="item-controls">
                 <button on:click={() => updateQuantity(item.id, item.quantity - 1)}>−</button>
