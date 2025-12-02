@@ -4,9 +4,9 @@
       <h3>UnkleAyo</h3>
       <ul>
         <li><a href="#archive">Archive</a></li>
-        <li><a href="#schedule">Schedule Meeting</a></li>
         <li><a href="#store">Store</a></li>
         <li><a href="https://www.instagram.com/unkleayo/">Contact</a></li>
+        <li><a href="#schedule">Schedule Meeting</a></li>
       </ul>
     </div>
 
