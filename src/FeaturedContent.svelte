@@ -13,13 +13,17 @@
 <div class="featured-content">
   <!-- Featured Podcast Card -->
   <button class="featured-section podcast-card" on:click={() => goToContent('podcast')}>
+    <div class="card-title">Podcast</div>
     <img src="/UnkleAyo.jpeg" alt="Podcast Cover" class="cover-image" />
+    <div class="card-note">Listen to conversations about culture, recruiting and success</div>
     <div class="view-all-btn">View All Podcast →</div>
   </button>
 
   <!-- Featured Newsletter Card -->
   <button class="featured-section newsletter-card" on:click={() => goToContent('newsletter')}>
+    <div class="card-title">Newsletter</div>
     <img src="/UnkleAyo.jpeg" alt="Newsletter Cover" class="cover-image" />
+    <div class="card-note">Weekly insights on principles of success</div>
     <div class="view-all-btn">View All Newsletter →</div>
   </button>
 </div>
@@ -35,19 +39,22 @@
   }
 
   .featured-section {
-    background: transparent;
-    border: none;
-    padding: 0;
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(247, 147, 30, 0.04) 100%);
+    border: 1px solid rgba(255, 107, 53, 0.15);
+    padding: 20px;
+    border-radius: 12px;
     transition: all 0.3s ease;
     cursor: pointer;
     text-align: center;
     font-family: inherit;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .featured-section:hover {
+    border-color: rgba(255, 107, 53, 0.3);
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.12) 0%, rgba(247, 147, 30, 0.08) 100%);
     transform: translateY(-4px);
   }
 
@@ -55,11 +62,20 @@
     transform: translateY(-2px);
   }
 
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff6b35;
+    margin: 0;
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+  }
+
   .cover-image {
     width: 100%;
-    height: 300px;
+    height: 280px;
     object-fit: cover;
-    border-radius: 12px;
+    border-radius: 8px;
     transition: transform 0.3s ease;
   }
 
@@ -67,13 +83,20 @@
     transform: scale(1.02);
   }
 
+  .card-note {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+    line-height: 1.5;
+  }
+
   .view-all-btn {
-    padding: 14px 24px;
+    padding: 12px 20px;
     background: rgba(255, 107, 53, 0.15);
     border: 2px solid rgba(255, 107, 53, 0.3);
-    border-radius: 8px;
+    border-radius: 6px;
     color: #ff6b35;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -93,13 +116,25 @@
       padding: 16px;
     }
 
+    .featured-section {
+      padding: 16px;
+    }
+
     .cover-image {
       height: 250px;
     }
 
+    .card-title {
+      font-size: 16px;
+    }
+
+    .card-note {
+      font-size: 11px;
+    }
+
     .view-all-btn {
-      font-size: 14px;
-      padding: 12px 20px;
+      font-size: 13px;
+      padding: 10px 16px;
     }
   }
 </style>
