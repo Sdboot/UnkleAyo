@@ -15,7 +15,7 @@
     },
     {
       id: 2,
-      title: 'Newsletter Issue #2: Building Great Teams',
+      title: 'Newsletter Issue #2: Building Great Team',
       description: 'Strategies for recruiting, onboarding, and maintaining high-performing teams.',
       date: 'Nov 1 2025',
       pdf: '/newsletter-2.pdf'
