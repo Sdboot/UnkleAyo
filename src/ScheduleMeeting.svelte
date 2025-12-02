@@ -12,6 +12,7 @@
   let errorMessage = ''
   let apiUrl = ''
   let copiedText = ''
+  let selectedPaymentMethod = 'bank'
 
   const todayDate = new Date().toISOString().split('T')[0]
   const ngnPrice = 75000
@@ -348,6 +349,24 @@
                 <div class="detail-row">
                   <span class="label">Amount:</span>
                   <span class="amount-value">${usdPrice}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-method">
+              <h4 class="method-title">💳 Card Payment (USD)</h4>
+              <div class="method-details">
+                <div class="detail-row">
+                  <span class="label">Payment Processor:</span>
+                  <span class="value">Stripe</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Amount:</span>
+                  <span class="amount-value">${usdPrice}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Accepted Cards:</span>
+                  <span class="value">Visa, Mastercard, Amex</span>
                 </div>
               </div>
             </div>
