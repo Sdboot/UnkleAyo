@@ -12,7 +12,6 @@
   let errorMessage = ''
   let apiUrl = ''
   let copiedText = ''
-  let selectedPaymentMethod = 'bank'
 
   const todayDate = new Date().toISOString().split('T')[0]
   const ngnPrice = 75000
@@ -210,9 +209,11 @@
 
       // Show success message since emails have been sent via Formspree
       successMessage = '✅ Meeting is being scheduled! Confirmation emails have been sent to you and the admin. You will receive a meeting link shortly.'
-      name = email = phone = selectedDate = selectedTime = ''
-      step = 1
-      setTimeout(() => { successMessage = '' }, 8000)
+      setTimeout(() => {
+        name = email = phone = selectedDate = selectedTime = ''
+        step = 1
+        successMessage = ''
+      }, 3000)
     } catch (error) {
       console.error('Error in handleSubmit:', error)
       errorMessage = error.message || 'Scheduling failed. Please try again.'
@@ -349,24 +350,6 @@
                 <div class="detail-row">
                   <span class="label">Amount:</span>
                   <span class="amount-value">${usdPrice}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="payment-method">
-              <h4 class="method-title">💳 Card Payment (USD)</h4>
-              <div class="method-details">
-                <div class="detail-row">
-                  <span class="label">Payment Processor:</span>
-                  <span class="value">Stripe</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Amount:</span>
-                  <span class="amount-value">${usdPrice}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Accepted Cards:</span>
-                  <span class="value">Visa, Mastercard, Amex</span>
                 </div>
               </div>
             </div>
