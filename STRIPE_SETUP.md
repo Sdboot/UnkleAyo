@@ -7,7 +7,6 @@ Your meeting scheduling system is now configured with Stripe payments + Resend e
 - ✅ Stripe Secret Key: Configured
 - ✅ Stripe Publishable Key: Configured  
 - ✅ Resend Email API: Configured
-- ✅ ngrok Tunnel: Active (https://untolerated-accusingly-mikayla.ngrok-free.dev)
 - ✅ Backend Server: Running on port 3001
 - ✅ Frontend: Running on port 5173
 
@@ -85,11 +84,6 @@ Use these Stripe test cards to process payments:
 - Check admin email is correct: `salakodeborah234@gmail.com`
 - Look for Resend API errors in server logs
 
-### ngrok tunnel down
-- Run in new terminal: `ngrok http 3001`
-- Update `.env` VITE_PUBLIC_URL with new URL
-- Reload frontend page
-
 ## 📊 Checking Payments in Stripe
 
 1. Go to https://dashboard.stripe.com
@@ -155,7 +149,6 @@ POST /api/webhook/stripe
 - ✅ Secure Stripe payment processing
 - ✅ Multi-currency support
 - ✅ Automatic email confirmations
-- ✅ Remote access via ngrok
 - ✅ User-friendly interface
 - ✅ Real-time validation
 - ✅ Error handling

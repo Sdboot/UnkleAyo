@@ -1,11 +1,7 @@
 node_modules
 .git
 server.js
-start-tunnel.bat
-start-remote.bat
-setup-ngrok.ps1
 STRIPE_SETUP.md
-REMOTE_ACCESS_SETUP.md
 SETUP_GUIDE.md
 README.md
 .env
