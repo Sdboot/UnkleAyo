@@ -4,6 +4,7 @@
   import Subscribe from './Subscribe.svelte'
   import Archive from './Archive.svelte'
   import ScheduleMeeting from './ScheduleMeeting.svelte'
+  import Store from './Store.svelte'
   import FeaturedContent from './FeaturedContent.svelte'
   import Podcasts from './Podcasts.svelte'
   import Newsletters from './Newsletters.svelte'
@@ -29,6 +30,8 @@
       currentPage = 'archive'
     } else if (hash === 'schedule') {
       currentPage = 'schedule'
+    } else if (hash === 'store') {
+      currentPage = 'store'
     } else {
       currentPage = 'home'
     }
@@ -68,6 +71,8 @@
     <Archive />
   {:else if currentPage === 'schedule'}
     <ScheduleMeeting />
+  {:else if currentPage === 'store'}
+    <Store />
   {/if}
 </main>
 
