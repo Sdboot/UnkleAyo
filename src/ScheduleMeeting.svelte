@@ -12,14 +12,25 @@
   let errorMessage = ''
   let apiUrl = ''
   let copiedText = ''
+  let selectedPaymentMethod = 'bank'
+  let stripe = null
+  let elements = null
+  let cardElement = null
 
   const todayDate = new Date().toISOString().split('T')[0]
   const ngnPrice = 75000
   const usdPrice = 50
   const walletAddress = '0x1234567890abcdef1234567890abcdef12345678'
+  const stripePublicKey = 'pk_live_YOUR_STRIPE_PUBLIC_KEY_HERE'
 
   onMount(async () => {
     window.scrollTo(0, 0)
+    
+    // Initialize Stripe
+    if (window.Stripe) {
+      stripe = window.Stripe(stripePublicKey)
+      console.log('✅ Stripe initialized')
+    }
     
     // Set API URL
     const publicUrl = import.meta.env.VITE_PUBLIC_URL
@@ -40,6 +51,33 @@
     
     console.log('Final API URL set to:', apiUrl)
   })
+
+  // Initialize Stripe card element when card payment method is selected
+  $: if (stripe && selectedPaymentMethod === 'card' && !cardElement && typeof window !== 'undefined') {
+    setTimeout(() => {
+      const cardElementDiv = document.getElementById('card-element')
+      if (cardElementDiv && !cardElement) {
+        elements = stripe.elements()
+        cardElement = elements.create('card', {
+          style: {
+            base: {
+              fontSize: '14px',
+              color: '#efefef',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              '::placeholder': {
+                color: 'rgba(255, 255, 255, 0.5)'
+              }
+            },
+            invalid: {
+              color: '#fca5a5'
+            }
+          }
+        })
+        cardElement.mount('#card-element')
+        console.log('✅ Card element mounted')
+      }
+    }, 0)
+  }
 
   function validateStep1() {
     if (!name.trim() || !email.trim() || !phone.trim()) {
@@ -105,6 +143,66 @@
         throw new Error('API URL not initialized. Please refresh the page.')
       }
 
+      // Handle card payment separately
+      if (selectedPaymentMethod === 'card') {
+        if (!stripe || !cardElement) {
+          throw new Error('Stripe is not initialized. Please refresh the page.')
+        }
+
+        // Create payment method
+        const { error, paymentMethod } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+          billing_details: {
+            name: name,
+            email: email
+          }
+        })
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        // Process payment on backend
+        const paymentResponse = await fetch(`${apiUrl}/api/process-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            paymentMethodId: paymentMethod.id,
+            name, email, phone,
+            date: selectedDate,
+            time: selectedTime,
+            amount: Math.round(usdPrice * 100), // Convert to cents
+            currency: 'usd'
+          })
+        })
+
+        if (!paymentResponse.ok) {
+          const errorData = await paymentResponse.json()
+          throw new Error(errorData.message || 'Payment processing failed')
+        }
+
+        const paymentData = await paymentResponse.json()
+        
+        if (paymentData.success) {
+          successMessage = '✅ Payment successful! Meeting is being scheduled. Confirmation emails have been sent.'
+          setTimeout(() => {
+            name = email = phone = selectedDate = selectedTime = ''
+            step = 1
+            successMessage = ''
+            cardElement.clear()
+          }, 3000)
+        } else {
+          throw new Error(paymentData.message || 'Payment failed')
+        }
+        
+        isLoading = false
+        return
+      }
+
+      // For other payment methods (bank transfer, crypto)
       console.log('Form submission starting...')
       console.log('API URL:', apiUrl)
       console.log('Request data:', { name, email, phone, selectedDate, selectedTime })
@@ -309,49 +407,77 @@
             <h3 class="section-subtitle">Select Payment Method</h3>
             
             <div class="payment-method">
-              <h4 class="method-title">🏦 Bank Transfer (NGN)</h4>
-              <div class="method-details">
-                <div class="detail-row">
-                  <span class="label">Bank Name:</span>
-                  <span class="value">First Bank Nigeria</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Account Name:</span>
-                  <span class="value">UnkleAyo</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Account Number:</span>
-                  <div class="copy-group">
-                    <span class="value copy-value" on:click={() => copyToClipboard('1234567890')}>1234567890</span>
-                    <button type="button" class="copy-btn" on:click={() => copyToClipboard('1234567890')}>
-                      {copiedText === '1234567890' ? '✓ Copied!' : '📋 Copy'}
-                    </button>
+              <div class="method-header">
+                <input type="radio" id="bank" name="payment" value="bank" bind:group={selectedPaymentMethod} />
+                <label for="bank" class="method-title">🏦 Bank Transfer (NGN)</label>
+              </div>
+              {#if selectedPaymentMethod === 'bank'}
+                <div class="method-details">
+                  <div class="detail-row">
+                    <span class="label">Bank Name:</span>
+                    <span class="value">First Bank Nigeria</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Account Name:</span>
+                    <span class="value">UnkleAyo</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Account Number:</span>
+                    <div class="copy-group">
+                      <span class="value copy-value" on:click={() => copyToClipboard('1234567890')}>1234567890</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard('1234567890')}>
+                        {copiedText === '1234567890' ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Amount:</span>
+                    <span class="amount-value">₦{ngnPrice.toLocaleString()}</span>
                   </div>
                 </div>
-                <div class="detail-row">
-                  <span class="label">Amount:</span>
-                  <span class="amount-value">₦{ngnPrice.toLocaleString()}</span>
-                </div>
-              </div>
+              {/if}
             </div>
 
             <div class="payment-method">
-              <h4 class="method-title">💳 Crypto Wallet (USD)</h4>
-              <div class="method-details">
-                <div class="detail-row">
-                  <span class="label">Wallet Address:</span>
-                  <div class="copy-group">
-                    <span class="value copy-value monospace" on:click={() => copyToClipboard(walletAddress)}>{walletAddress}</span>
-                    <button type="button" class="copy-btn" on:click={() => copyToClipboard(walletAddress)}>
-                      {copiedText === walletAddress ? '✓ Copied!' : '📋 Copy'}
-                    </button>
+              <div class="method-header">
+                <input type="radio" id="crypto" name="payment" value="crypto" bind:group={selectedPaymentMethod} />
+                <label for="crypto" class="method-title">💳 Crypto Wallet (USD)</label>
+              </div>
+              {#if selectedPaymentMethod === 'crypto'}
+                <div class="method-details">
+                  <div class="detail-row">
+                    <span class="label">Wallet Address:</span>
+                    <div class="copy-group">
+                      <span class="value copy-value monospace" on:click={() => copyToClipboard(walletAddress)}>{walletAddress}</span>
+                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(walletAddress)}>
+                        {copiedText === walletAddress ? '✓ Copied!' : '📋 Copy'}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Amount:</span>
+                    <span class="amount-value">${usdPrice}</span>
                   </div>
                 </div>
-                <div class="detail-row">
-                  <span class="label">Amount:</span>
-                  <span class="amount-value">${usdPrice}</span>
-                </div>
+              {/if}
+            </div>
+
+            <div class="payment-method">
+              <div class="method-header">
+                <input type="radio" id="card" name="payment" value="card" bind:group={selectedPaymentMethod} />
+                <label for="card" class="method-title">💳 Debit/Credit Card (USD)</label>
               </div>
+              {#if selectedPaymentMethod === 'card'}
+                <div class="method-details">
+                  <div class="stripe-element-wrapper">
+                    <div id="card-element" bind:this={cardElement}></div>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Amount:</span>
+                    <span class="amount-value">${usdPrice}</span>
+                  </div>
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -366,7 +492,11 @@
           <div class="button-group">
             <button type="button" class="submit-btn back-btn" on:click={backToSchedule} disabled={isLoading}>Back</button>
             <button type="submit" class="submit-btn confirm-btn" disabled={isLoading}>
-              {isLoading ? 'Scheduling...' : '✓ I\'ve Made the Payment'}
+              {#if isLoading}
+                {selectedPaymentMethod === 'card' ? 'Processing Payment...' : 'Scheduling...'}
+              {:else}
+                {selectedPaymentMethod === 'card' ? 'Pay with Card' : '✓ I\'ve Made the Payment'}
+              {/if}
             </button>
           </div>
         </form>
@@ -572,17 +702,46 @@
     padding: 16px;
   }
 
+  .method-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+
+  .method-header input[type="radio"] {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+  }
+
+  .method-header label {
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+  }
+
   .method-title {
     font-size: 15px;
     font-weight: 600;
     color: #ff6b35;
-    margin: 0 0 12px 0;
+    margin: 0;
   }
 
   .method-details {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-left: 32px;
+  }
+
+  .stripe-element-wrapper {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
   }
 
   .detail-row {
