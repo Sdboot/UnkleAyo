@@ -111,32 +111,30 @@
 
   @media (max-width: 768px) {
     .featured-content {
-      grid-template-columns: 1fr;
-      gap: 20px;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
       padding: 16px;
-      max-width: 80%;
     }
 
     .featured-section {
-      padding: 16px;
+      padding: 12px;
     }
 
     .cover-image {
-      height: 250px;
-      width: 70%;
+      height: 180px;
     }
 
     .card-title {
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .card-note {
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .view-all-btn {
-      font-size: 13px;
-      padding: 10px 16px;
+      font-size: 12px;
+      padding: 8px 12px;
     }
   }
 </style>
