@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte'
+  import { fade, scale } from 'svelte/transition'
 
   let products = [
     {
@@ -37,6 +38,8 @@
   let errorMessage = ''
   let successMessage = ''
   let apiUrl = ''
+  let selectedProduct = null
+  let showProductModal = false
 
   onMount(async () => {
     // Set API URL
@@ -68,6 +71,18 @@
       cart = [...cart, { ...product, quantity: 1 }]
     }
     localStorage.setItem('store_cart', JSON.stringify(cart))
+  }
+
+  function showProduct(product) {
+    selectedProduct = product
+    showProductModal = true
+  }
+
+  function closeProductModal() {
+    showProductModal = false
+    setTimeout(() => {
+      selectedProduct = null
+    }, 300)
   }
 
   function removeFromCart(productId) {
@@ -197,7 +212,7 @@
       <h2>Products</h2>
       <div class="products-grid">
         {#each products as product (product.id)}
-          <div class="product-card">
+          <button class="product-card" on:click={() => showProduct(product)} type="button" aria-label="View {product.name} details">
             <img src={product.image} alt={product.name} class="product-image" />
             <div class="product-content">
               <h3>{product.name}</h3>
@@ -206,14 +221,14 @@
                 <span class="price">₦{product.price.toLocaleString()}</span>
                 <button
                   class="add-btn"
-                  on:click={() => addToCart(product)}
+                  on:click|stopPropagation={() => addToCart(product)}
                   disabled={isLoading}
                 >
                   Add to Cart
                 </button>
               </div>
             </div>
-          </div>
+          </button>
         {/each}
       </div>
     </div>
@@ -313,6 +328,37 @@
   </button>
 </div>
 
+{#if showProductModal && selectedProduct}
+  <div class="modal-backdrop" on:keydown={(e) => e.key === 'Escape' && closeProductModal()} on:click={closeProductModal} transition:fade={{ duration: 300 }} role="button" tabindex="0" aria-label="Close modal">
+    <div class="product-modal" on:click|stopPropagation transition:scale={{ duration: 300, start: 0.9 }} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" on:click={closeProductModal}>✕</button>
+      
+      <div class="modal-content">
+        <div class="modal-image">
+          <img src={selectedProduct.image} alt={selectedProduct.name} />
+        </div>
+        
+        <div class="modal-info">
+          <h2 id="modal-title">{selectedProduct.name}</h2>
+          <p class="modal-description">{selectedProduct.details}</p>
+          
+          <div class="modal-price">
+            <span class="price-label">Price:</span>
+            <span class="price-value">₦{selectedProduct.price.toLocaleString()}</span>
+          </div>
+          
+          <button class="modal-add-btn" on:click={() => {
+            addToCart(selectedProduct)
+            closeProductModal()
+          }} disabled={isLoading}>
+            ✓ Add to Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   .store-container {
     max-width: 1200px;
@@ -386,6 +432,14 @@
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
+    cursor: pointer;
+    all: unset;
+    display: block;
+    background: rgba(255, 107, 53, 0.05);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
   }
 
   .product-card:hover {
@@ -746,6 +800,154 @@
       right: 16px;
       padding: 10px 16px;
       font-size: 13px;
+    }
+  }
+
+  /* Product Modal Styles */
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    padding: 20px;
+  }
+
+  .product-modal {
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95), rgba(30, 30, 30, 0.95));
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: 50%;
+    color: #efefef;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover {
+    background: rgba(255, 107, 53, 0.2);
+    transform: rotate(90deg);
+  }
+
+  .modal-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding: 32px;
+  }
+
+  .modal-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .modal-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .modal-info h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #efefef;
+    margin: 0 0 16px 0;
+  }
+
+  .modal-description {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .modal-price {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+  }
+
+  .price-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+  }
+
+  .price-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ff6b35;
+  }
+
+  .modal-add-btn {
+    padding: 14px 24px;
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .modal-add-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+  }
+
+  .modal-add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    .modal-content {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .modal-info h2 {
+      font-size: 20px;
+    }
+
+    .price-value {
+      font-size: 24px;
     }
   }
 </style>
