@@ -114,6 +114,7 @@
       grid-template-columns: 1fr;
       gap: 20px;
       padding: 16px;
+      max-width: 80%;
     }
 
     .featured-section {
