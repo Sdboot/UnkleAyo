@@ -97,7 +97,7 @@
       const item = cart.find(item => item.id === productId)
       if (item) {
         item.quantity = quantity
-        cart = cart
+        cart = [...cart]
         localStorage.setItem('store_cart', JSON.stringify(cart))
       }
     }
