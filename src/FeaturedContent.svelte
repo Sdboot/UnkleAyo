@@ -93,7 +93,7 @@
   .view-all-btn {
     padding: 12px 20px;
     background: rgba(255, 107, 53, 0.15);
-    border: 2px solid rgba(255, 107, 53, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.65);
     border-radius: 6px;
     color: #ff6b35;
     font-size: 14px;
@@ -122,6 +122,7 @@
 
     .cover-image {
       height: 250px;
+      width: 70%;
     }
 
     .card-title {

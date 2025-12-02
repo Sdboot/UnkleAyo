@@ -5,6 +5,7 @@
       <ul>
         <li><a href="#archive">Archive</a></li>
         <li><a href="#schedule">Schedule Meeting</a></li>
+        <li><a href="https://selar.com/m/salakoayomide" target="_blank">Store</a></li>
         <li><a href="https://www.instagram.com/unkleayo/">Contact</a></li>
       </ul>
     </div>
