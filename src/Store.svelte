@@ -207,7 +207,7 @@
     <div class="success-banner">{successMessage}</div>
   {/if}
 
-  <div class="store-wrapper">
+  <div class="store-wrapper" class:cart-visible={showCart}>
     <div class="products-section">
       <h2>Products</h2>
       <div class="products-grid">
@@ -781,6 +781,22 @@
       padding: 24px 16px;
     }
 
+    .store-wrapper.cart-visible::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 190;
+    }
+
+    .store-wrapper.cart-visible .store-container {
+      filter: blur(3px);
+      pointer-events: none;
+    }
+
     .store-header h1 {
       font-size: 28px;
     }
@@ -793,6 +809,15 @@
       width: 100vw;
       right: -100vw;
       max-width: 100vw;
+    }
+
+    .cart-section.open {
+      right: 0;
+    }
+
+    .store-container {
+      overflow: hidden;
+      transition: opacity 0.3s ease;
     }
 
     .cart-toggle {
