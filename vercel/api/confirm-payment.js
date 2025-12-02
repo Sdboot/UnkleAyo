@@ -121,37 +121,55 @@ export default async function handler(req, res) {
     const adminEmail_ = adminEmail || process.env.ADMIN_EMAIL || 'salakodeborah234@gmail.com'
 
     console.log('📧 Sending emails via Formspree...')
-    console.log('User email to:', email)
+    console.log('Customer email to:', email)
     console.log('Admin email to:', adminEmail_)
 
-    // Send confirmation email to user via Formspree
-    const userEmailData = {
+    // Send confirmation email to customer via Formspree (with auto-response)
+    const customerEmailData = {
       email: email,
-      message: `Meeting Confirmation\n\nDear ${name},\n\nYour meeting has been scheduled successfully!\n\nDetails:\nDate: ${formattedDate}\nTime: ${time}\nReference: ${paymentIntentId.slice(-8).toUpperCase()}\n\nThank you for booking with UnkleAyo.`,
-      subject: `✅ Meeting Confirmed - ${formattedDate} at ${time}`,
-      _subject: `✅ Meeting Confirmed - ${formattedDate} at ${time}`,
-      _template: 'table'
+      name: name,
+      phone: phone,
+      date: formattedDate,
+      time: time,
+      amount: amount,
+      currency: currency,
+      reference: paymentIntentId.slice(-8).toUpperCase(),
+      message: `Meeting Confirmation\n\nDear ${name},\n\nYour meeting with UnkleAyo has been successfully scheduled!\n\nMeeting Details:\nDate: ${formattedDate}\nTime: ${time}\nPhone: ${phone}\nAmount: ${amount} ${currency}\nReference: ${paymentIntentId.slice(-8).toUpperCase()}\n\nThank you for booking with us!`,
+      _subject: `✅ Your Meeting is Confirmed - ${formattedDate} at ${time}`,
+      _template: 'table',
+      _replyto: email
     }
 
     try {
-      const userResponse = await fetch('https://formspree.io/f/myzwkepe', {
+      const customerResponse = await fetch('https://formspree.io/f/myzwkepe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(userEmailData)
+        body: JSON.stringify(customerEmailData)
       })
       
-      console.log('✅ User confirmation email submitted to Formspree:', userResponse.status)
-    } catch (userEmailErr) {
-      console.error('⚠️ Error sending user email:', userEmailErr.message)
+      if (customerResponse.ok) {
+        console.log('✅ Customer confirmation email sent via Formspree')
+      } else {
+        console.error('⚠️ Customer email failed with status:', customerResponse.status)
+      }
+    } catch (customerEmailErr) {
+      console.error('⚠️ Error sending customer email:', customerEmailErr.message)
     }
 
     // Send admin notification via Formspree
     const adminEmailData = {
       email: adminEmail_,
-      message: `New Meeting Booking\n\nCustomer: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate: ${formattedDate}\nTime: ${time}\nAmount: ${amount} ${currency}\nReference: ${paymentIntentId}\n\nThis is an automated notification from UnkleAyo.`,
-      subject: `📅 New Meeting Scheduled - ${name}`,
+      name: name,
+      customer_email: email,
+      phone: phone,
+      date: formattedDate,
+      time: time,
+      amount: amount,
+      currency: currency,
+      reference: paymentIntentId,
+      message: `New Meeting Booking\n\nCustomer Name: ${name}\nCustomer Email: ${email}\nPhone: ${phone}\n\nMeeting Details:\nDate: ${formattedDate}\nTime: ${time}\nAmount: ${amount} ${currency}\nPayment Reference: ${paymentIntentId}\n\nThis is an automated notification from UnkleAyo website.`,
       _subject: `📅 New Meeting Scheduled - ${name}`,
       _template: 'table'
     }
@@ -165,14 +183,18 @@ export default async function handler(req, res) {
         body: JSON.stringify(adminEmailData)
       })
       
-      console.log('✅ Admin notification email submitted to Formspree:', adminResponse.status)
+      if (adminResponse.ok) {
+        console.log('✅ Admin notification email sent via Formspree')
+      } else {
+        console.error('⚠️ Admin email failed with status:', adminResponse.status)
+      }
     } catch (adminEmailErr) {
       console.error('⚠️ Error sending admin email:', adminEmailErr.message)
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Meeting scheduled successfully! Confirmation emails have been sent.',
+      message: 'Meeting scheduled successfully! Confirmation emails have been sent to you and the admin.',
       paymentIntentId,
       paymentMethod: 'bank_transfer'
     })

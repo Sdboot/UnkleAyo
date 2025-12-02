@@ -109,6 +109,73 @@
       console.log('API URL:', apiUrl)
       console.log('Request data:', { name, email, phone, selectedDate, selectedTime })
 
+      const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+
+      const paymentRef = `meeting_${Date.now()}`
+
+      // Send customer confirmation email via Formspree
+      const customerFormData = {
+        email: email,
+        name: name,
+        phone: phone,
+        date: formattedDate,
+        time: selectedTime,
+        amount: ngnPrice,
+        currency: 'NGN',
+        reference: paymentRef.slice(-8).toUpperCase(),
+        message: `Meeting Confirmation\n\nDear ${name},\n\nYour meeting with UnkleAyo has been successfully scheduled!\n\nMeeting Details:\nDate: ${formattedDate}\nTime: ${selectedTime}\nPhone: ${phone}\nAmount: ₦${ngnPrice.toLocaleString()}\nReference: ${paymentRef.slice(-8).toUpperCase()}\n\nThank you for booking with us!`,
+        _subject: `✅ Your Meeting is Confirmed - ${formattedDate} at ${selectedTime}`,
+        _template: 'table',
+        _replyto: email
+      }
+
+      try {
+        const customerResponse = await fetch('https://formspree.io/f/myzwkepe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(customerFormData)
+        })
+        console.log('✅ Customer email sent to Formspree:', customerResponse.status)
+      } catch (err) {
+        console.error('⚠️ Error sending customer email:', err)
+      }
+
+      // Send admin notification email via Formspree
+      const adminFormData = {
+        email: 'salakodeborah234@gmail.com',
+        name: name,
+        customer_email: email,
+        phone: phone,
+        date: formattedDate,
+        time: selectedTime,
+        amount: ngnPrice,
+        currency: 'NGN',
+        reference: paymentRef,
+        message: `New Meeting Booking\n\nCustomer Name: ${name}\nCustomer Email: ${email}\nPhone: ${phone}\n\nMeeting Details:\nDate: ${formattedDate}\nTime: ${selectedTime}\nAmount: ₦${ngnPrice.toLocaleString()}\nPayment Reference: ${paymentRef}\n\nThis is an automated notification from UnkleAyo website.`,
+        _subject: `📅 New Meeting Scheduled - ${name}`,
+        _template: 'table'
+      }
+
+      try {
+        const adminResponse = await fetch('https://formspree.io/f/myzwkepe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(adminFormData)
+        })
+        console.log('✅ Admin email sent to Formspree:', adminResponse.status)
+      } catch (err) {
+        console.error('⚠️ Error sending admin email:', err)
+      }
+
       const confirmUrl = `${apiUrl}/api/confirm-payment`
       console.log('Sending POST request to:', confirmUrl)
 
@@ -118,7 +185,7 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          paymentIntentId: `meeting_${Date.now()}`,
+          paymentIntentId: paymentRef,
           paymentMethod: 'bank_transfer',
           name, email, phone,
           date: selectedDate,
