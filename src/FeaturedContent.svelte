@@ -14,17 +14,17 @@
   <!-- Featured Podcast Card -->
   <button class="featured-section podcast-card" on:click={() => goToContent('podcast')}>
     <div class="card-title">Podcasts</div>
-    <img src="/UnkleAyo.jpeg" alt="Podcast Cover" class="cover-image" />
+    <img src="/podcast.jpg" alt="Podcast Cover" class="cover-image" />
     <div class="card-note">Listen to conversations about culture, recruiting and success</div>
-    <div class="view-all-btn">View All Podcast →</div>
+    <div class="view-all-btn">View All Podcasts →</div>
   </button>
 
   <!-- Featured Newsletter Card -->
   <button class="featured-section newsletter-card" on:click={() => goToContent('newsletter')}>
     <div class="card-title">Newsletters</div>
-    <img src="/UnkleAyo.jpeg" alt="Newsletter Cover" class="cover-image" />
+    <img src="/newsletters.jpg" alt="Newsletter Cover" class="cover-image" />
     <div class="card-note">Weekly insights on principles of success</div>
-    <div class="view-all-btn">View All Newsletter →</div>
+    <div class="view-all-btn">View All Newsletters →</div>
   </button>
 </div>
 
