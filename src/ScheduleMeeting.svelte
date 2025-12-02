@@ -1,6 +1,5 @@
 <script>
   import { onMount } from 'svelte'
-  import { currencies, currencyPrices, bankDetails } from './currencyConfig'
 
   let step = 1
   let name = ''
@@ -8,7 +7,6 @@
   let phone = ''
   let selectedDate = ''
   let selectedTime = ''
-  let selectedCurrency = 'USD'
   let isLoading = false
   let successMessage = ''
   let errorMessage = ''
@@ -16,6 +14,9 @@
   let copiedText = ''
 
   const todayDate = new Date().toISOString().split('T')[0]
+  const ngnPrice = 75000
+  const usdPrice = 50
+  const walletAddress = '0x1234567890abcdef1234567890abcdef12345678'
 
   onMount(async () => {
     window.scrollTo(0, 0)
@@ -26,34 +27,18 @@
       apiUrl = publicUrl
       console.log('✅ Using public URL from VITE_PUBLIC_URL:', apiUrl)
     } else {
-      // For local development only
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         const protocol = window.location.protocol
         const port = 3001
         apiUrl = `${protocol}//${window.location.hostname}:${port}`
         console.log('✅ Local development mode, using:', apiUrl)
       } else {
-        // For production (Vercel) - use same origin for API calls
         apiUrl = window.location.origin
         console.log('✅ Production mode (Vercel), using same origin:', apiUrl)
       }
     }
     
     console.log('Final API URL set to:', apiUrl)
-    
-    // Test API connectivity
-    try {
-      const testResponse = await fetch(`${apiUrl}/api/test`)
-      if (testResponse.ok) {
-        console.log('✅ API is reachable')
-      } else {
-        console.warn('⚠️ API test returned status:', testResponse.status)
-      }
-    } catch (err) {
-      console.error('⚠️ API test failed:', err.message)
-      console.error('Make sure the backend server is running on:', apiUrl)
-      console.error('Or set VITE_PUBLIC_URL environment variable to your backend URL')
-    }
   })
 
   function validateStep1() {
@@ -108,75 +93,6 @@
     })
   }
 
-  async function confirmBankPayment() {
-    if (!name || !email || !phone || !selectedDate || !selectedTime) {
-      errorMessage = 'Please complete all meeting details'
-      return
-    }
-
-    errorMessage = ''
-    successMessage = ''
-    isLoading = true
-
-    try {
-      const amount = currencyPrices[selectedCurrency]
-
-      console.log('Confirming bank payment for:', { name, email, amount, selectedCurrency })
-      
-      if (!apiUrl) {
-        throw new Error('API URL not initialized. Please refresh the page.')
-      }
-
-      console.log('Sending request to:', `${apiUrl}/api/confirm-payment`)
-
-      const confirmResponse = await fetch(`${apiUrl}/api/confirm-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          paymentIntentId: `bank_transfer_${Date.now()}`,
-          paymentMethod: 'bank_transfer',
-          name, email, phone,
-          date: selectedDate,
-          time: selectedTime,
-          currency: selectedCurrency,
-          amount
-        })
-      })
-
-      console.log('Response status:', confirmResponse.status)
-
-      if (!confirmResponse.ok) {
-        const errorText = await confirmResponse.text()
-        console.error('API error response:', errorText)
-        throw new Error(`API returned ${confirmResponse.status}: ${errorText}`)
-      }
-
-      const confirmData = await confirmResponse.json()
-      console.log('API response:', confirmData)
-
-      if (confirmData.success) {
-        successMessage = '✅ Meeting scheduled successfully! Check your email for confirmation details.'
-        setTimeout(() => {
-          name = email = phone = selectedDate = selectedTime = ''
-          selectedCurrency = 'USD'
-          paymentMethod = 'transfer'
-          step = 1
-          successMessage = ''
-        }, 3000)
-      } else {
-        errorMessage = confirmData.message || 'Failed to schedule meeting'
-      }
-    } catch (error) {
-      console.error('Error confirming bank payment:', error)
-      console.error('Error stack:', error.stack)
-      errorMessage = `Error: ${error.message}`
-    } finally {
-      isLoading = false
-    }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
 
@@ -185,17 +101,14 @@
     isLoading = true
 
     try {
-      const amount = currencyPrices[selectedCurrency]
-
       if (!apiUrl) {
         throw new Error('API URL not initialized. Please refresh the page.')
       }
 
       console.log('Form submission starting...')
       console.log('API URL:', apiUrl)
-      console.log('Request data:', { name, email, phone, selectedDate, selectedTime, selectedCurrency, amount })
+      console.log('Request data:', { name, email, phone, selectedDate, selectedTime })
 
-      // Bank transfer payment flow
       const confirmUrl = `${apiUrl}/api/confirm-payment`
       console.log('Sending POST request to:', confirmUrl)
 
@@ -205,13 +118,13 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          paymentIntentId: `bank_transfer_${Date.now()}`,
+          paymentIntentId: `meeting_${Date.now()}`,
           paymentMethod: 'bank_transfer',
           name, email, phone,
           date: selectedDate,
           time: selectedTime,
-          currency: selectedCurrency,
-          amount,
+          currency: 'NGN',
+          amount: ngnPrice,
           adminEmail: 'salakodeborah234@gmail.com'
         })
       })
@@ -228,9 +141,8 @@
       console.log('Response data:', confirmData)
 
       if (confirmData.success) {
-        successMessage = '✅ Meeting scheduled successfully! A confirmation email has been sent to you and the admin.'
+        successMessage = '✅ Meeting scheduled successfully! Confirmation emails have been sent to you and the admin.'
         name = email = phone = selectedDate = selectedTime = ''
-        selectedCurrency = 'USD'
         step = 1
         setTimeout(() => { successMessage = '' }, 7000)
       } else {
@@ -238,17 +150,11 @@
       }
     } catch (error) {
       console.error('Error in handleSubmit:', error)
-      console.error('Error name:', error.name)
-      console.error('Error message:', error.message)
       errorMessage = error.message || 'Scheduling failed. Please try again.'
     } finally {
       isLoading = false
     }
   }
-
-  $: amount = currencyPrices[selectedCurrency]
-  $: currentCurrency = currencies.find(c => c.code === selectedCurrency)
-  $: accountDetails = bankDetails[selectedCurrency]
 </script>
 
 <div class="schedule-container">
@@ -333,143 +239,55 @@
             </div>
           </div>
 
-          <div class="currency-section">
-            <h3 class="section-subtitle">Currency</h3>
-            <div class="currency-grid">
-              {#each currencies as curr}
-                <label class="currency-option">
-                  <input type="radio" bind:group={selectedCurrency} value={curr.code} />
-                  <div class="currency-card" class:selected={selectedCurrency === curr.code}>
-                    <span class="currency-code">{curr.code}</span>
-                    <span class="currency-symbol">{curr.symbol}</span>
-                    <span class="currency-amount">{currencyPrices[curr.code]}</span>
-                  </div>
-                </label>
-              {/each}
-            </div>
-          </div>
-
-          <div class="payment-amount">
-            <h3 class="section-subtitle">Amount</h3>
-            <div class="amount-display">
-              <span class="amount-value">{currentCurrency?.symbol}{amount}</span>
-              <span class="amount-currency">{selectedCurrency}</span>
-            </div>
-          </div>
-
-          <div class="bank-details-section">
-            <h3 class="section-subtitle">Bank Transfer Details</h3>
-              <div class="bank-details-card">
-                <div class="bank-detail-row">
-                  <span class="detail-label">Bank Name:</span>
-                  <span class="detail-value">{accountDetails.bankName}</span>
+          <div class="payment-options">
+            <h3 class="section-subtitle">Select Payment Method</h3>
+            
+            <div class="payment-method">
+              <h4 class="method-title">🏦 Bank Transfer (NGN)</h4>
+              <div class="method-details">
+                <div class="detail-row">
+                  <span class="label">Bank Name:</span>
+                  <span class="value">First Bank Nigeria</span>
                 </div>
-                <div class="bank-detail-row">
-                  <span class="detail-label">Account Name:</span>
-                  <span class="detail-value">{accountDetails.accountName}</span>
+                <div class="detail-row">
+                  <span class="label">Account Name:</span>
+                  <span class="value">UnkleAyo</span>
                 </div>
-                <div class="bank-detail-row">
-                  <span class="detail-label">Account Number:</span>
-                  <div class="copy-container">
-                    <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.accountNumber)} title="Click to copy">{accountDetails.accountNumber}</span>
-                    <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.accountNumber)} title="Copy account number">
-                      {copiedText === accountDetails.accountNumber ? '✓ Copied!' : '📋 Copy'}
+                <div class="detail-row">
+                  <span class="label">Account Number:</span>
+                  <div class="copy-group">
+                    <span class="value copy-value" on:click={() => copyToClipboard('1234567890')}>1234567890</span>
+                    <button type="button" class="copy-btn" on:click={() => copyToClipboard('1234567890')}>
+                      {copiedText === '1234567890' ? '✓ Copied!' : '📋 Copy'}
                     </button>
                   </div>
                 </div>
-                {#if accountDetails.iban}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">IBAN:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.iban)} title="Click to copy">{accountDetails.iban}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.iban)} title="Copy IBAN">
-                        {copiedText === accountDetails.iban ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.sortCode}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">Sort Code:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.sortCode)} title="Click to copy">{accountDetails.sortCode}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.sortCode)} title="Copy sort code">
-                        {copiedText === accountDetails.sortCode ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.routingNumber}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">Routing Number:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.routingNumber)} title="Click to copy">{accountDetails.routingNumber}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.routingNumber)} title="Copy routing number">
-                        {copiedText === accountDetails.routingNumber ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.swiftCode}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">SWIFT Code:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.swiftCode)} title="Click to copy">{accountDetails.swiftCode}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.swiftCode)} title="Copy SWIFT code">
-                        {copiedText === accountDetails.swiftCode ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.bsb}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">BSB:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.bsb)} title="Click to copy">{accountDetails.bsb}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.bsb)} title="Copy BSB">
-                        {copiedText === accountDetails.bsb ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.ifscCode}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">IFSC Code:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.ifscCode)} title="Click to copy">{accountDetails.ifscCode}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.ifscCode)} title="Copy IFSC code">
-                        {copiedText === accountDetails.ifscCode ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.branchCode}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">Branch Code:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.branchCode)} title="Click to copy">{accountDetails.branchCode}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.branchCode)} title="Copy branch code">
-                        {copiedText === accountDetails.branchCode ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-                {#if accountDetails.bankCode}
-                  <div class="bank-detail-row">
-                    <span class="detail-label">Bank Code:</span>
-                    <div class="copy-container">
-                      <span class="detail-value copy-value" on:click={() => copyToClipboard(accountDetails.bankCode)} title="Click to copy">{accountDetails.bankCode}</span>
-                      <button type="button" class="copy-btn" on:click={() => copyToClipboard(accountDetails.bankCode)} title="Copy bank code">
-                        {copiedText === accountDetails.bankCode ? '✓ Copied!' : '📋 Copy'}
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-              </div>
-              <div class="bank-notice">
-                <p>Please complete your bank transfer and include your name as reference. Your meeting will be confirmed once payment is received.</p>
+                <div class="detail-row">
+                  <span class="label">Amount:</span>
+                  <span class="amount-value">₦{ngnPrice.toLocaleString()}</span>
+                </div>
               </div>
             </div>
+
+            <div class="payment-method">
+              <h4 class="method-title">💳 Crypto Wallet (USD)</h4>
+              <div class="method-details">
+                <div class="detail-row">
+                  <span class="label">Wallet Address:</span>
+                  <div class="copy-group">
+                    <span class="value copy-value monospace" on:click={() => copyToClipboard(walletAddress)}>{walletAddress}</span>
+                    <button type="button" class="copy-btn" on:click={() => copyToClipboard(walletAddress)}>
+                      {copiedText === walletAddress ? '✓ Copied!' : '📋 Copy'}
+                    </button>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Amount:</span>
+                  <span class="amount-value">${usdPrice}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {#if successMessage}
             <div class="success-message">{successMessage}</div>
@@ -675,94 +493,33 @@
     gap: 16px;
   }
 
-  .currency-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 12px;
-  }
-
-  .currency-option input {
-    display: none;
-  }
-
-  .currency-card {
+  .payment-options {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
+    gap: 20px;
   }
 
-  .currency-card:hover {
-    border-color: rgba(255, 107, 53, 0.3);
-  }
-
-  .currency-card.selected {
-    background: rgba(255, 107, 53, 0.1);
-    border-color: #ff6b35;
-  }
-
-  .currency-code {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-  }
-
-  .currency-amount {
-    font-size: 13px;
-    font-weight: 600;
-    color: #ff6b35;
-  }
-
-  .payment-amount {
-    background: rgba(255, 107, 53, 0.1);
-    border: 1px solid rgba(255, 107, 53, 0.2);
-    border-radius: 8px;
-    padding: 20px;
-  }
-
-  .amount-display {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-
-  .amount-value {
-    font-size: 32px;
-    font-weight: 700;
-    color: #ff6b35;
-  }
-
-  .amount-currency {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 600;
-  }
-
-  .bank-details-section {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .bank-details-card {
-    background: rgba(255, 255, 255, 0.05);
+  .payment-method {
+    background: rgba(255, 107, 53, 0.08);
     border: 1px solid rgba(255, 107, 53, 0.2);
     border-radius: 8px;
     padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
   }
 
-  .bank-detail-row {
+  .method-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ff6b35;
+    margin: 0 0 12px 0;
+  }
+
+  .method-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -770,26 +527,30 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  .bank-detail-row:last-child {
+  .detail-row:last-child {
     border-bottom: none;
   }
 
-  .detail-label {
-    font-size: 13px;
+  .label {
+    font-size: 12px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
-  .detail-value {
+  .value {
     font-size: 13px;
     color: #efefef;
-    font-family: 'Courier New', monospace;
     font-weight: 500;
   }
 
-  .copy-container {
+  .value.monospace {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+
+  .copy-group {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -830,18 +591,10 @@
     transform: scale(0.95);
   }
 
-  .bank-notice {
-    background: rgba(255, 193, 7, 0.1);
-    border: 1px solid rgba(255, 193, 7, 0.2);
-    border-radius: 6px;
-    padding: 12px;
-  }
-
-  .bank-notice p {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0;
-    line-height: 1.5;
+  .amount-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff6b35;
   }
 
   .success-message {
