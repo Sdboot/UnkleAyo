@@ -612,12 +612,18 @@
   .value.monospace {
     font-family: 'Courier New', monospace;
     font-size: 11px;
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
 
   .copy-group {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
   .copy-value {
@@ -626,6 +632,10 @@
     border-radius: 4px;
     transition: all 0.2s;
     flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .copy-value:hover {
@@ -757,6 +767,24 @@
       flex-shrink: 0;
       font-size: 11px;
       padding: 3px 8px;
+    }
+
+    .copy-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .copy-value {
+      width: 100%;
+      min-width: auto;
+      word-break: break-all;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      padding: 8px;
+    }
+
+    .copy-btn {
+      width: 100%;
     }
 
     .button-group {
