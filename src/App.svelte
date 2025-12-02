@@ -4,8 +4,9 @@
   import Subscribe from './Subscribe.svelte'
   import Archive from './Archive.svelte'
   import ScheduleMeeting from './ScheduleMeeting.svelte'
-  import ContentSections from './ContentSections.svelte'
   import FeaturedContent from './FeaturedContent.svelte'
+  import Podcasts from './Podcasts.svelte'
+  import Newsletters from './Newsletters.svelte'
 
   let currentPage = 'home'
   let menuOpen = false
@@ -20,6 +21,10 @@
     const hash = window.location.hash.slice(1)
     if (hash === 'subscribe') {
       currentPage = 'subscribe'
+    } else if (hash === 'podcasts') {
+      currentPage = 'podcasts'
+    } else if (hash === 'newsletters') {
+      currentPage = 'newsletters'
     } else if (hash === 'archive' || hash === 'content') {
       currentPage = 'archive'
     } else if (hash === 'schedule') {
@@ -55,6 +60,10 @@
     <Footer />
   {:else if currentPage === 'subscribe'}
     <Subscribe />
+  {:else if currentPage === 'podcasts'}
+    <Podcasts />
+  {:else if currentPage === 'newsletters'}
+    <Newsletters />
   {:else if currentPage === 'archive'}
     <Archive />
   {:else if currentPage === 'schedule'}

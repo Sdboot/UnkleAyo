@@ -19,8 +19,11 @@
   }
 
   function goToContent(type) {
-    navigateTo('archive')
-    window.location.hash = 'content'
+    if (type === 'podcast') {
+      window.location.hash = 'podcasts'
+    } else if (type === 'newsletter') {
+      window.location.hash = 'newsletters'
+    }
   }
 
   function downloadAudio() {
