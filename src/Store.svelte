@@ -859,6 +859,24 @@
       padding: 10px 12px;
       font-size: 13px;
     }
+
+    .product-modal {
+      max-width: 90vw;
+      max-height: 85vh;
+    }
+
+    .modal-content {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      z-index: 1000;
+    }
   }
 
   /* Product Modal Styles */
