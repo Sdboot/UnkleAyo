@@ -103,6 +103,7 @@
             step = 3
             selectedDate = ''
             selectedTime = ''
+            isLoading = false
             
             window.scrollTo(0, 0)
           } catch (err) {
