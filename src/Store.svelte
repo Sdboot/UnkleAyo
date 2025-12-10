@@ -137,7 +137,7 @@
       const items = cart.map(item => `${item.quantity}x ${item.name}`).join(', ')
 
       const paystackHandler = window.PaystackPop.setup({
-        key: 'pk_live_YOUR_PAYSTACK_PUBLIC_KEY_HERE',
+        key: 'pk_test_e1aec9e9771dbc0a474a7eebaac972d5097b6d0f',
         email: email,
         amount: totalAmount * 100, // Paystack uses kobo (cents)
         ref: `store_${Date.now()}`,

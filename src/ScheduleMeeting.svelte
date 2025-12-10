@@ -14,7 +14,7 @@
 
   const todayDate = new Date().toISOString().split('T')[0]
   const ngnPrice = 75000
-  const paystackPublicKey = 'pk_live_YOUR_PAYSTACK_PUBLIC_KEY_HERE'
+  const paystackPublicKey = 'pk_test_e1aec9e9771dbc0a474a7eebaac972d5097b6d0f'
 
   onMount(async () => {
     window.scrollTo(0, 0)
