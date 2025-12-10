@@ -93,24 +93,24 @@
           errorMessage = 'Payment window closed'
           isLoading = false
         },
-        onSuccess: async function(response) {
-          try {
-            // Store reference and move to scheduling
-            paymentReference = response.reference
-            
-            // Move to scheduling step
-            successMessage = '✅ Payment successful! Now select your preferred meeting date and time.'
-            step = 3
-            selectedDate = ''
-            selectedTime = ''
-            isLoading = false
-            
-            window.scrollTo(0, 0)
-          } catch (err) {
-            console.error('Error processing payment:', err)
-            errorMessage = err.message || 'Payment processing failed'
-            isLoading = false
-          }
+        onSuccess: function(response) {
+          // Store reference
+          paymentReference = response.reference
+          console.log('✅ Payment successful, reference:', paymentReference)
+          
+          // Reset form
+          selectedDate = ''
+          selectedTime = ''
+          
+          // Show success message
+          successMessage = '✅ Payment successful! Now select your preferred meeting date and time.'
+          
+          // Move to step 3
+          step = 3
+          isLoading = false
+          
+          // Scroll to top
+          setTimeout(() => window.scrollTo(0, 0), 100)
         }
       })
 
